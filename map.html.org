@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Network map</title>
+<meta name="description" content="A network map diagram." />
+<meta charset="UTF-8">
+<script src="go.js"></script>
+<script id="code">
+  function init() {
+    if (window.goSamples) goSamples();
+    var $ = go.GraphObject.make; 
+
+    myDiagram =
+      $(go.Diagram, "myDiagramDiv",
+        {
+          initialAutoScale: go.Diagram.Uniform,
+          contentAlignment: go.Spot.Center,
+          layout:
+            $(go.ForceDirectedLayout,
+              { maxIterations: 200, defaultSpringLength: 30, defaultElectricalCharge: 100 })
+        });
+
+    myDiagram.nodeTemplate =
+      $(go.Node, "Auto",
+        { locationSpot: go.Spot.Center },
+        $(go.Shape, "Rectangle",
+          { fill: $(go.Brush, "Linear", { 0: "rgb(254, 201, 0)", 1: "rgb(254, 162, 0)" }), stroke: "black" }),
+        $(go.TextBlock,
+          { font: "bold 10pt helvetica, bold arial, sans-serif", margin: 4 },
+          new go.Binding("text", "text"))
+      );
+
+    myDiagram.linkTemplate =
+      $(go.Link,
+        $(go.Shape,
+          { stroke: "black" }),
+        $(go.Shape,
+          { toArrow: "standard", stroke: null }),
+        $(go.Panel, "Auto",
+          $(go.Shape,
+            { fill: $(go.Brush, "Radial", { 0: "rgb(240, 240, 240)", 0.3: "rgb(240, 240, 240)", 1: "rgba(240, 240, 240, 0)" }),
+              stroke: null }),
+          $(go.TextBlock,
+            { textAlign: "center",
+              font: "10pt helvetica, arial, sans-serif",
+              stroke: "#555555",
+              margin: 4 },
+            new go.Binding("text", "text"))
+        )
+      );
+
+    var nodeDataArray = [ { key: 1, text: "Network Map\ncreated using Gojs and nmap." }, ];
+    var linkDataArray = [ ];
+    myDiagram.model = new go.GraphLinksModel(nodeDataArray, linkDataArray);
+  }
+</script>
+</head>
+<body onload="init()">
+<div id="sample">
+  <div id="myDiagramDiv" style="background-color: whitesmoke; border: solid 1px black; width: 100%; height: 700px"></div>
+  <p>
+  Network map
+  </p>
+</div>
+</body>
+</html>
