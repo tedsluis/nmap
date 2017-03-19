@@ -1,67 +1,122 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Network map</title>
-<meta name="description" content="A network map diagram." />
-<meta charset="UTF-8">
-<script src="go.js"></script>
-<script id="code">
-  function init() {
-    if (window.goSamples) goSamples();
-    var $ = go.GraphObject.make; 
+  <meta charset="utf-8">
+  <meta name="Nmap Scan" >
+  <title>Nmap scan</title>
+  <script src="go.js"></script>
+  <script id="code">
+var head = document.getElementsByTagName("head")[0];
 
-    myDiagram =
-      $(go.Diagram, "myDiagramDiv",
-        {
-          initialAutoScale: go.Diagram.Uniform,
-          contentAlignment: go.Spot.Center,
-          layout:
-            $(go.ForceDirectedLayout,
-              { maxIterations: 200, defaultSpringLength: 30, defaultElectricalCharge: 100 })
-        });
-
-    myDiagram.nodeTemplate =
-      $(go.Node, "Auto",
-        { locationSpot: go.Spot.Center },
-        $(go.Shape, "Rectangle",
-          { fill: $(go.Brush, "Linear", { 0: "rgb(254, 201, 0)", 1: "rgb(254, 162, 0)" }), stroke: "black" }),
-        $(go.TextBlock,
-          { font: "bold 10pt helvetica, bold arial, sans-serif", margin: 4 },
-          new go.Binding("text", "text"))
-      );
-
-    myDiagram.linkTemplate =
-      $(go.Link,
-        $(go.Shape,
-          { stroke: "black" }),
-        $(go.Shape,
-          { toArrow: "standard", stroke: null }),
-        $(go.Panel, "Auto",
-          $(go.Shape,
-            { fill: $(go.Brush, "Radial", { 0: "rgb(240, 240, 240)", 0.3: "rgb(240, 240, 240)", 1: "rgba(240, 240, 240, 0)" }),
-              stroke: null }),
-          $(go.TextBlock,
-            { textAlign: "center",
-              font: "10pt helvetica, arial, sans-serif",
-              stroke: "#555555",
-              margin: 4 },
-            new go.Binding("text", "text"))
-        )
-      );
-
-    var nodeDataArray = [ { key: 1, text: "Network Map\ncreated using Gojs and nmap." }, ];
-    var linkDataArray = [ ];
-    myDiagram.model = new go.GraphLinksModel(nodeDataArray, linkDataArray);
+function goCode(pre, w, h, diagramclass, parentid) {
+  if (diagramclass === undefined) diagramclass = go.Diagram;
+  if (typeof pre === "string") pre = document.getElementById(pre);
+  var div = document.createElement("div");
+  div.style.width = w + "px";
+  div.style.height = h + "px";
+  div.className = "diagramStyling";
+  var parent;
+  if (parentid === undefined) {
+    parent = pre.parentNode;
+  } else {
+    parent = document.getElementById(parentid);
   }
-</script>
+  parent.appendChild(div);
+  var f = eval("(function (diagram, $) {" + pre.textContent + "})");
+  f(new diagramclass(div), go.GraphObject.make);
+}
+
+function goIntro() {
+  _traverseDOM(document);
+}
+
+function _traverseDOM(node) {
+  if (node.nodeType === 1 && node.nodeName === "A" && !node.getAttribute("href")) {
+    var text = node.innerHTML.split(".");
+    if (text.length === 1) {
+      node.setAttribute("href", "../api/symbols/" + text[0] + ".html");
+      node.setAttribute("target", "api");
+    } else if (text.length === 2) {
+      node.setAttribute("href", "../api/symbols/" + text[0] + ".html" + "#" + text[1]);
+      node.setAttribute("target", "api");
+    } else {
+      alert("Unknown API reference: " + node.innerHTML);
+    }
+  }
+  for (var i = 0; i < node.childNodes.length; i++) {
+    _traverseDOM(node.childNodes[i]);
+  }
+}
+
+  </script>
 </head>
-<body onload="init()">
-<div id="sample">
-  <div id="myDiagramDiv" style="background-color: whitesmoke; border: solid 1px black; width: 100%; height: 700px"></div>
-  <p>
-  Network map
-  </p>
+<body onload="goIntro()">
+<div id="content">
+
+
+<h2 id="ChangingCategoryOfPart">Network map</h2>
+<script data-language="javascript" id="changingCategory">
+  function changeCategory(e, obj) {
+    var node = obj.part;
+    if (node) {
+      var diagram = node.diagram;
+      diagram.startTransaction("changeCategory");
+      var cat = diagram.model.getCategoryForNodeData(node.data);
+      if (cat === "simple")
+        cat = "detailed";
+      else
+        cat = "simple";
+      diagram.model.setCategoryForNodeData(node.data, cat);
+      diagram.commitTransaction("changeCategory");
+    }
+  }
+
+  var simpletemplate =
+    $(go.Node, "Spot",
+      $(go.Panel, "Auto",
+        $(go.Shape, "Ellipse",
+          new go.Binding("fill", "color")),
+        $(go.TextBlock,
+          new go.Binding("text", "key"))
+      ),
+      $("Button",
+        { alignment: go.Spot.TopRight },
+        $(go.Shape, "AsteriskLine", { width: 8, height: 8 }),
+        { click: changeCategory })
+    );
+
+  var detailtemplate =
+    $(go.Node, "Spot",
+      $(go.Panel, "Auto",
+        $(go.Shape, "RoundedRectangle",
+          new go.Binding("fill", "color")),
+        $(go.Panel, "Table",
+          { defaultAlignment: go.Spot.Left },
+          $(go.TextBlock, { row: 0, column: 0, columnSpan: 2, font: "bold 12pt sans-serif" },
+            new go.Binding("text", "key")),
+          $(go.TextBlock, { row: 1, column: 0 }, "Description:"),
+          $(go.TextBlock, { row: 1, column: 1 }, new go.Binding("text", "desc"))
+        )
+      ),
+      $("Button",
+        { alignment: go.Spot.TopRight },
+        $(go.Shape, "AsteriskLine", { width: 8, height: 8 }),
+        { click: changeCategory })
+    );
+
+  var templmap = new go.Map("string", go.Node);
+  templmap.add("simple", simpletemplate);
+  templmap.add("detailed", detailtemplate);
+  diagram.nodeTemplateMap = templmap;
+
+  diagram.layout = $(go.ForceDirectedLayout,{ maxIterations: 200, defaultSpringLength: 30, defaultElectricalCharge: 100 });
+
+diagram.model.nodeDataArray = [ { key: "Install nmap", desc: "yum install nmap (RHEL/CENTOS)\ndnf install nmap (Fedora)\napt-get install nmap (debian/ubuntu)\nOr download it from: https://nmap.org/download.html", color: "lightblue", category: "detailed" },{ key: "Run nmapscan.pl", desc: "e.g. ./nmapscan.pl -ip 192.168.1.0/24", color: "lightgreen", category: "detailed" },{ key: "View map.html", desc: "Refresh this page!\nView your subnet.\nDrag your hosts around.\nToggle the * buttons to view detais.", color: "lightyellow", category: "detailed" }, { key: "Credits", desc: "Ted Sluis\nted.sluis@gmail.com\nhttps://github.com/tedsluis/nmap", color: "lightgray", category: "detailed" }];
+diagram.model.linkDataArray = [ { from: "Install nmap", to: "Run nmapscan.pl" },{ from: "Run nmapscan.pl", to: "View map.html" },{ from: "View map.html", to: "Credits" }];
+</script>
+<script>goCode("changingCategory", 1900, 1080)</script>
+
+
 </div>
 </body>
 </html>
