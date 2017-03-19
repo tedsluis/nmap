@@ -5,10 +5,12 @@ use Getopt::Long;
 # Input parameters
 my $help;
 my $ipaddresses;
+my $defaultgateway;
 my $debug;
 GetOptions(
      "help!"=>\$help,
      "debug!"=>\$debug,
+     "gw=s"=>\$defaultgateway,
      "ipaddresses=s"=>\$ipaddresses
 ) or exit(1);
 #
@@ -18,19 +20,24 @@ if ($help) {
 
 usage: 
        $0 
+optional:
        $0 -ip <subnet>|<ip address>[,<subnet>|<ip address>]    Scan subnet(s) and/or ip address(es).
+       $0 -gw <ip address>,[<ip addres>]                       Specify default gateway(s).
        $0 -debug                                               Display debug info.
        $0 -help                                                This helptext.
 
 examples:
        $0 -ip 192.168.1.0/24,192.168.100.0/24
        $0 -ip 192.168.1.254,192.168.1.1
+       $0 -ip 192.168.1.0/24 -gw 192.168.1.254
 
 view result 'map.html' in a webbrowser.
 
 note: be sure you have installed nmap!\n\n";
 exit 0;
 }
+    
+
 #
 # Get networks if non were specified
 if (!$ipaddresses) {
@@ -43,10 +50,15 @@ if (!$ipaddresses) {
      $ipaddresses=join(",",@subnets);
 }
 print $ipaddresses."\n";
+ 
 # 
 # Scan subnets
 my @node;
 my @link;
+my %hosts;    # hosts{ip} => ip+name
+my %ips;      # ips{subnet}{ip} => ip+name
+my %subnets;  # subnets{ip} => subnet
+my %gateway;  # gateway{subnet} => ip gateway
 my @subnets=split(/,/,$ipaddresses);
 foreach my $subnet (@subnets) {
      print "SUBNET=$subnet\n" if ($debug);
@@ -64,8 +76,10 @@ foreach my $subnet (@subnets) {
           } elsif ($line =~ /^\s*$/) {
                # Reached end of host info: start processing host info.
                print "IP ADDRESS=$ipaddress\n" if ($debug);
+	       $hosts{$ipaddress}=join(",",@key);
+               $ips{$subnet}{$ipaddress}=join(",",@key); 
                push(@node,"{ key: \"".join(",",@key)."\", desc: \"".join("\\n",@desc)."\", color: \"$color\", category: \"$category\" }");
-               push(@link,"{ from: \"192.168.11.1,rb750\", to: \"".join(",",@key)."\" }");
+               push(@link,"{ from: \"DEFAULTGATEWAY$subnet\", to: \"".join(",",@key)."\" }");
                # clear variables for next hosts.
                $info="";
                @key=();
@@ -77,6 +91,7 @@ foreach my $subnet (@subnets) {
           } elsif ($line =~ /Nmap\sscan\sreport\sfor\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s*/) {
                # parse IP address  
                $ipaddress=$1;
+               $subnets{$ipaddress}=$subnet;
                push(@key,$1);
                my @hostname=`nslookup $ipaddress`;
                foreach my $line (@hostname) {
@@ -96,6 +111,13 @@ foreach my $subnet (@subnets) {
                     if ($line =~ /^\s*(\d+)\s+([a-z0-9\.\-]+)\s+\((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\)\s+/i) {
                          push(@route,"\[$2 ($3)\]");
                          print "HOP=$2 $3\n" if ($debug);
+                         # Store gateway subnet.
+                         if ($1 !~ /^1$/) {
+                              $gateway{$subnets{$3}} = $3 if ((exists $subnets{$3}) && (!exists $gateway{$subnets{$3}}));
+                              if ($route[0] =~ /\((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\)/) {
+                                    $gateway{$subnets{$1}} = $1 if ((exists $subnets{$1}) && (!exists $gateway{$subnets{$1}}));
+                              }
+                         }
                     }
                }
                push(@desc,"Route: ".join("-->",@route));
@@ -157,8 +179,17 @@ foreach my $subnet (@subnets) {
           }
           $info.="$line\n";
      }
+     #
+     # Add gateway
+     my @gw=split(/,/,$defaultgateway);
+     for my $gw (@gw) {
+          $gateway{$subnet}=$gw;
+     }
+
+
 }
 
+#
 # Add data to map.html
 my $node= "diagram.model.nodeDataArray = [".join(",",@node)."];";
 my $link= "diagram.model.linkDataArray = [".join(",",@link)."];";
@@ -168,10 +199,23 @@ open my $out, '>', "map.html"     or die "Can't write map.html file: $!";
 
 while( <$in> )
      {
+     # Insert host data and links
      s/^\s*diagram\.model\.nodeDataArray\s=\s\[.+$/${node}/g;
      s/^\s*diagram\.model\.linkDataArray\s=\s\[.+$/${link}/g;
-    print $out $_;
-    }
+     # replace dummy gateway
+     foreach my $subnet (@subnets) {
+          my $gatewayname;
+          if ((exists $gateway{$subnet}) && ($hosts{$gateway{$subnet}})) {
+               $gatewayname=$hosts{$gateway{$subnet}};
+          } else {
+               my ($key,@x)=(sort keys %{$ips{$subnet}});
+               $gatewayname=$hosts{$key};
+	       print "KEY=$key,gatewayname=$gatewayname\n";
+          }       
+          s/DEFAULTGATEWAY${subnet}/${gatewayname}/g;
+     } 
+     print $out $_;
+     }
 
 close $in;
 close $out;
