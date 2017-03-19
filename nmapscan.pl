@@ -5,16 +5,39 @@ use Getopt::Long;
 # Input parameters
 my $help;
 my $ipaddresses;
+my $debug;
 GetOptions(
      "help!"=>\$help,
+     "debug!"=>\$debug,
      "ipaddresses=s"=>\$ipaddresses
 ) or exit(1);
+#
+# Help
+if ($help) {
+     print "Help
+
+usage: 
+       $0 
+       $0 -ip <subnet>|<ip address>[,<subnet>|<ip address>]    Scan subnet(s) and/or ip address(es).
+       $0 -debug                                               Display debug info.
+       $0 -help                                                This helptext.
+
+examples:
+       $0 -ip 192.168.1.0/24,192.168.100.0/24
+       $0 -ip 192.168.1.254,192.168.1.1
+
+view result 'map.html' in a webbrowser.
+
+note: be sure you have installed nmap!\n\n";
+exit 0;
+}
 #
 # Get networks if non were specified
 if (!$ipaddresses) {
      my @data=`ip add | grep inet | grep -v 127.0.0.1`;
      my @subnets;
      foreach my $subnet (@data) {
+           print $subnet if ($debug);
            push(@subnets,$1) if ($subnet =~ /inet\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\/\d{1,3})\s/);
      }
      $ipaddresses=join(",",@subnets);
@@ -24,133 +47,129 @@ print $ipaddresses."\n";
 # Scan subnets
 my @node;
 my @link;
-my $num=0;
 my @subnets=split(/,/,$ipaddresses);
 foreach my $subnet (@subnets) {
+     print "SUBNET=$subnet\n" if ($debug);
      my @data=`nmap -O -n $subnet`;
      my $info="";
+     my @key;
+     my @desc;
+     my $color="lightyellow";
+     my $category="simple";
      my $ipaddress="unknown";
-     my $hostname="unknown";
-     my $macaddress="unknown";
-     my $vendor="unknown";
-     my $status="unknown";
-     my $latency="unknown";
-     my $hops="unknown";
-     my $devicetype="unknown";
-     my $running="unknown";
-     my $notshown="unknown";
-     my $os_cpe="unknown";
-     my $os_details="unknown";
-     my $warning="unknown";
-     my $aggressive_os_guesses="unknown";
      foreach my $line (@data) {
           chomp($line);
-	  if (($ipaddress =~ /^unknown$/) && ($line =~ /^\s*$/)) {
+          if (($ipaddress =~ /^unknown$/) && ($line =~ /^\s*$/)) {
                next;
-	  } elsif ($line =~ /^\s*$/) {
-               my @text;
-               $num++;
-               print "----------------------\nIP ADDRESS=$ipaddress\nHOSTNAME=$hostname\nMAC ADDRESS=$macaddress\nVENDOR=$vendor\nHOPS=$hops\nSTATUS=$status\nLATENCY=$latency\nDEVICE TYPE=$devicetype\nRUNNING=$running\nNOT SHOWN=$notshown\nOC CPE=$os_cpe\nOS DETAILS=$os_details\nWARNINGS=$warning\nAGRESSIVE OS GUESSES=$aggressive_os_guesses\n$info\n------------------------\n";
-	       push(@text,"IP: $ipaddress")           if ($ipaddress  !~ /^unknown$/i);
-	       push(@text,"HOSTNAME: $hostname")      if ($hostname   !~ /^unknown$/i);
-	       push(@text,"MAC: $macaddress")         if ($macaddress !~ /^unknown$/i);
-	       push(@text,"VENDOR: $vendor")          if ($vendor     !~ /^unknown$/i);
-	       push(@text,"DEVICE TYPE: $devicetype") if ($devicetype !~ /^unknown$/i);
-	       push(@text,"RUNNING: $running")        if ($running    !~ /^unknown$/i);
-	       push(@node,"{ key: $num, text: \"".join("\\n",@text)."\" }");
-               push(@link,"{ from: 1, to: $num}");
-	       $info="";
-	       $ipaddress="unknown";
-	       $hostname="unknown";
-	       $macaddress="unknown";
-	       $vendor="unknown";
-               $status="unknown";
-               $latency="unknown";
-               $hops="unknown";
-               $devicetype="unknown";
-               $running="unknown";
-               $notshown="unknown";
-               $os_cpe="unknown";
-               $os_details="unknown";
-               $warning="unknown";
-               $aggressive_os_guesses="unknown";
+          } elsif ($line =~ /^\s*$/) {
+               # Reached end of host info: start processing host info.
+               print "IP ADDRESS=$ipaddress\n" if ($debug);
+               push(@node,"{ key: \"".join(",",@key)."\", desc: \"".join("\\n",@desc)."\", color: \"$color\", category: \"$category\" }");
+               push(@link,"{ from: \"192.168.11.1,rb750\", to: \"".join(",",@key)."\" }");
+               # clear variables for next hosts.
+               $info="";
+               @key=();
+               @desc=();
+               $color="lightyellow";
+               $category="simple";
+               $ipaddress="unknown";
                next;
           } elsif ($line =~ /Nmap\sscan\sreport\sfor\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s*/) {
+               # parse IP address  
                $ipaddress=$1;
+               push(@key,$1);
                my @hostname=`nslookup $ipaddress`;
                foreach my $line (@hostname) {
                     chomp($line);
-                    $hostname=$1 if ($line =~ /in-addr\.arpa\s+name\s=\s(.+)\.$/);               
+                    # Parse hostname   
+                    if ($line =~ /in-addr\.arpa\s+name\s=\s(.+)\.$/){
+                         push(@key,$1);
+                         $color="lightblue";
+                         print "HOSTNAME=$1\n" if ($debug);
+                    }
                }
-               my @route=`traceroute $ipaddress`;
-               foreach my $line (@route) {
+               my @route;
+               my @traceroute=`traceroute $ipaddress`;
+               foreach my $line (@traceroute) {
                     chomp($line);
-#[root@pavilion nmap]# traceroute 192.168.1.254
-#traceroute to 192.168.1.254 (192.168.1.254), 30 hops max, 60 byte packets
-# 1  rb750 (192.168.11.1)  8.179 ms  8.803 ms  13.160 ms
-# 2  192.168.1.254 (192.168.1.254)  20.443 ms  17.846 ms  20.429 ms
-#[root@pavilion nmap]# traceroute 192.168.11.177
-#traceroute to 192.168.11.177 (192.168.11.177), 30 hops max, 60 byte packets
-# 1  ted1090-7 (192.168.11.177)  2.726 ms  4.043 ms  9.338 ms
+                    # Parse route    
+                    if ($line =~ /^\s*(\d+)\s+([a-z0-9\.\-]+)\s+\((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\)\s+/i) {
+                         push(@route,"\[$2 ($3)\]");
+                         print "HOP=$2 $3\n" if ($debug);
+                    }
                }
+               push(@desc,"Route: ".join("-->",@route));
                next;
-	       # MAC Address: C0:EE:FB:E2:96:AA (OnePlus Tech (Shenzhen))
           } elsif ($line =~ /MAC\sAddress:\s([0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2})\s+\((.+)\)$/i) {
-               $macaddress=$1;
-               $vendor=$2;
+               push(@desc,"MAC: $1");
+               push(@desc,"Vendor: $2");
+               print "MAC ADDRESS=$1 $2\n" if ($debug);
                next;
           } elsif ($line =~ /Host\sis\sup\s\((\d+\.\d+s\slatency)\)/) {
-               $status="UP";
-               $latency=$1;
+               push(@desc,"Status: Up");
+               push(@desc,"Latency: $1");
+               print "LATENCY=$1\n" if ($debug);
                next;
           } elsif ($line =~ /Network\sDistance:\s(\d+)\shop/) {
-               $hops=$1;
+               push(@desc,"Hops: $1");
+               print "HOPS=$1\n" if ($debug);
                next;
           } elsif ($line =~ /Device type:\s(.+)$/) {
-               $devicetype=$1;
+               push(@desc,"Device type: $1");
+               print "DEVICE TYPE=$1\n" if ($debug);
                next;
           } elsif ($line =~ /Running:\s(.+)$/) {
-               $running=$1;
+               push(@desc,"Running: $1");
+               print "RUNNING=$1\n" if ($debug);
                next;
           } elsif ($line =~ /Not\sshown:\s(.+)$/) {
-               $notshown=$1;
+               push(@desc,"Not shown: $1");
+               print "NOT SHOWN=$1\n" if ($debug);       
                next;
           } elsif ($line =~ /OS\sCPE:\s(.+)$/) {
-               $os_cpe=$1;
+               push(@desc,"OS CPE: $1");
+               print "OS CPE=$1\n" if ($debug);
                next;
           } elsif ($line =~ /OS\sdetails:\s(.+)$/) {
-               $os_details=$1;
+               push(@desc,"Os Details: $1");
+               print "OS DETAILS=$1\n" if ($debug);
                next;
           } elsif ($line =~ /Warning:\s(.+)$/) {
-               $warning=$1.". ";
+               push(@desc,"Warning: $1.");
+               print "WARNING=$1\n" if ($debug);
                next;
           } elsif ($line =~ /(All\s1000\sscanned\sports)\son\s(.+ )(\sare\sclosed)/) {
-               $notshown=$1.$3;
+               push(@desc,"Not shown: $1.$3");
+               print "NOT SHOWN=$1.$3\n" if ($debug);
                next;
           } elsif ($line =~ /Aggressive OS guesses:\s(.+)$/) {
-               $aggressive_os_guesses=$1;
+               push(@desc,"Aggressive OS guesses: $1");
+               print "AGGRESSIVE OS GUESSES=$1\n" if ($debug);
                next;
           } elsif ($line =~ /(Too\smany\sfingerprints.+)$/) {
-               $warning.=$1.". ";
+               push(@desc,"Warning: $1. ");
+               print "TOO MANY FINGERPRINTS=$1\n" if ($debug);
                next;
           } elsif ($line =~ /(No\sexact\sOS\smatches.+)$/) {
-               $warning.=$1.".";
+               push(@desc,"Warning: $1.");
+               print "NO EXACT OS MATCHES=$1\n" if ($debug);
                next;
           }
           $info.="$line\n";
      }
 }
-my $node= "var nodeDataArray = [".join(",",@node)."];";
-my $link= "var linkDataArray = [".join(",",@link)."];";
-print "\nnode=$node\n\nlink=$link\n\n";
+
+# Add data to map.html
+my $node= "diagram.model.nodeDataArray = [".join(",",@node)."];";
+my $link= "diagram.model.linkDataArray = [".join(",",@link)."];";
 
 open my $in,  '<', "map.html.org" or die "Can't read map.html.org file: $!";
 open my $out, '>', "map.html"     or die "Can't write map.html file: $!";
 
 while( <$in> )
      {
-     s/^.+var\snodeDataArray.+$/${node}/g;
-     s/^.+var\slinkDataArray.+$/${link}/g;
+     s/^\s*diagram\.model\.nodeDataArray\s=\s\[.+$/${node}/g;
+     s/^\s*diagram\.model\.linkDataArray\s=\s\[.+$/${link}/g;
     print $out $_;
     }
 
