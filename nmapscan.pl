@@ -93,6 +93,16 @@ foreach my $subnet (@subnets) {
                $ipaddress=$1;
                $subnets{$ipaddress}=$subnet;
                push(@key,$1);
+	       #
+               # Add gateway
+               my @gw=split(/,/,$defaultgateway);
+               for my $gw (@gw) {
+		    if ($gw =~ /^${ipaddress}$/) {
+                         $gateway{$subnet}=$gw;
+                         $color="red";
+                         print "GATEWAY=$gw\n" if ($debug);
+                    }
+               }
                my @hostname=`nslookup $ipaddress`;
                foreach my $line (@hostname) {
                     chomp($line);
@@ -179,12 +189,6 @@ foreach my $subnet (@subnets) {
           }
           $info.="$line\n";
      }
-     #
-     # Add gateway
-     my @gw=split(/,/,$defaultgateway);
-     for my $gw (@gw) {
-          $gateway{$subnet}=$gw;
-     }
 
 
 }
@@ -210,7 +214,7 @@ while( <$in> )
           } else {
                my ($key,@x)=(sort keys %{$ips{$subnet}});
                $gatewayname=$hosts{$key};
-	       print "KEY=$key,gatewayname=$gatewayname\n";
+	       print "KEY=$key,gatewayname=$gatewayname\n" if ($debug);
           }       
           s/DEFAULTGATEWAY${subnet}/${gatewayname}/g;
      } 
