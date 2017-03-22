@@ -5,12 +5,10 @@ use Getopt::Long;
 # Input parameters
 my $help;
 my $ipaddresses;
-my $defaultgateway;
 my $debug;
 GetOptions(
      "help!"=>\$help,
      "debug!"=>\$debug,
-     "gw=s"=>\$defaultgateway,
      "ipaddresses=s"=>\$ipaddresses
 ) or exit(1);
 #
@@ -22,14 +20,12 @@ usage:
        $0 
 optional:
        $0 -ip <subnet>|<ip address>[,<subnet>|<ip address>]    Scan subnet(s) and/or ip address(es).
-       $0 -gw <ip address>,[<ip addres>]                       Specify default gateway(s).
        $0 -debug                                               Display debug info.
        $0 -help                                                This helptext.
 
 examples:
        $0 -ip 192.168.1.0/24,192.168.100.0/24
        $0 -ip 192.168.1.254,192.168.1.1
-       $0 -ip 192.168.1.0/24 -gw 192.168.1.254
 
 view result 'map.html' in a webbrowser.
 
@@ -55,7 +51,11 @@ print $ipaddresses."\n";
 # Scan subnets
 my @node;
 my @link;
+my %fact;
 my %host;
+my %route;
+my %reverse;
+my %reverseroute;
 my %hosts;    # hosts{ip} => ip+name
 my %ips;      # ips{subnet}{ip} => ip+name
 my %subnets;  # subnets{ip} => subnet
@@ -96,17 +96,7 @@ foreach my $subnet (@subnets) {
                $subnets{$ipaddress}=$subnet;
                push(@key,$1);
                #
-               # Add gateway
-               my @gw=split(/,/,$defaultgateway);
-               for my $gw (@gw) {
-                    if ($gw =~ /^${ipaddress}$/) {
-                         $host{$ipaddress}{'gateway'}=$ipaddress;
-                         $gateway{$subnet}=$gw;
-                         $host{$ipaddress}{'color'}='red';
-                         $color="red";
-                         print "GATEWAY=$gw\n" if ($debug);
-                    }
-               }
+               # get hostname
                my @hostname=`nslookup $ipaddress`;
                foreach my $line (@hostname) {
                     chomp($line);
@@ -124,12 +114,16 @@ foreach my $subnet (@subnets) {
                foreach my $line (@traceroute) {
                     chomp($line);
                     # Parse route    
-                    if ($line =~ /^\s*(\d+)\s+([a-z0-9\.\-]+)\s+\((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\)\s+/i) {
-                         push(@route,"\[$2 ($3)\]");
-                         print "HOP=$2 $3\n" if ($debug);
+                    if ($line =~ /^\s*(\d+)\s+([a-z0-9\.\-]+)\s+\((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\)\s(.+)$/i) {
+                         my ($hop,$name,$ip,$rest)=($1,$2,$3,$4);
+                         $reverseroute{$ipaddress}=$3 if ($rest =~ /\s!H\s/);
+                         $route{$ipaddress}{$hop}=$ip;
+                         $reverse{$ipaddress}{$ip}=$hop;
+                         push(@route,"\[$name ($ip)\]");
+                         print "HOP=$name $ip\n" if ($debug);
                          # Store gateway subnet.
-                         if ($1 !~ /^1$/) {
-                              $gateway{$subnets{$3}} = $3 if ((exists $subnets{$3}) && (!exists $gateway{$subnets{$3}}));
+                         if ($hop !~ /^1$/) {
+                              $gateway{$subnets{$ip}} = $ip if ((exists $subnets{$ip}) && (!exists $gateway{$subnets{$ip}}));
                               if ($route[0] =~ /\((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\)/) {
                                     $gateway{$subnets{$1}} = $1 if ((exists $subnets{$1}) && (!exists $gateway{$subnets{$1}}));
                               }
@@ -168,42 +162,42 @@ foreach my $subnet (@subnets) {
                print "RUNNING=$1\n" if ($debug);
                next;
           } elsif ($line =~ /Not\sshown:\s(.+)$/) {
-               $host{$ipaddress}{'notshown'}.="$1\n";
+               push(@{$fact{$ipaddress}},"$1");
                push(@desc,"Not shown: $1");
                print "NOT SHOWN=$1\n" if ($debug);       
                next;
           } elsif ($line =~ /OS\sCPE:\s(.+)$/) {
-               $host{$ipaddress}{'os'}.="$1\n";
+               $host{$ipaddress}{'oc_cpe'}="$1\n";
                push(@desc,"OS CPE: $1");
                print "OS CPE=$1\n" if ($debug);
                next;
           } elsif ($line =~ /OS\sdetails:\s(.+)$/) {
-               $host{$ipaddress}{'os'}.="$1\n";
+               $host{$ipaddress}{'os_details'}="$1\n";
                push(@desc,"Os Details: $1");
                print "OS DETAILS=$1\n" if ($debug);
                next;
           } elsif ($line =~ /Warning:\s(.+)$/) {
-               $host{$ipaddress}{'warning'}.="$1.\n";
+               push(@{$fact{$ipaddress}},"$1.");
                push(@desc,"Warning: $1.");
                print "WARNING=$1\n" if ($debug);
                next;
           } elsif ($line =~ /(All\s1000\sscanned\sports)\son\s(.+ )(\sare\sclosed)/) {
-               $host{$ipaddress}{'notshown'}.="$1.$3\n";
+               push(@{$fact{$ipaddress}},"$1.$3");
                push(@desc,"Not shown: $1.$3");
                print "NOT SHOWN=$1.$3\n" if ($debug);
                next;
           } elsif ($line =~ /Aggressive OS guesses:\s(.+)$/) {
-               $host{$ipaddress}{'os'}.="$1\n";
+               push(@{$fact{$ipaddress}},"$1");
                push(@desc,"Aggressive OS guesses: $1");
                print "AGGRESSIVE OS GUESSES=$1\n" if ($debug);
                next;
           } elsif ($line =~ /(Too\smany\sfingerprints.+)$/) {
-               $host{$ipaddress}{'warning'}.="$1.\n";
+               push(@{$fact{$ipaddress}},"$1.");
                push(@desc,"Warning: $1. ");
                print "TOO MANY FINGERPRINTS=$1.\n" if ($debug);
                next;
           } elsif ($line =~ /(No\sexact\sOS\smatches.+)$/) {
-               $host{$ipaddress}{'warning'}.="$1.\n";
+               push(@{$fact{$ipaddress}},"$1.");
                push(@desc,"Warning: $1.");
                print "NO EXACT OS MATCHES=$1\n" if ($debug);
                next;
@@ -212,6 +206,25 @@ foreach my $subnet (@subnets) {
      }
 
 
+}
+
+#
+# 
+foreach my $subnet (sort keys %subnets) {
+     foreach my $ip (sort keys %{$ips{$subnet}}) {
+          my ($last_hop,@dummy)=(sort keys %{$reverse{$ip}});
+          if ($last_hop > 1) {
+               for (my $hop = 1; $hop < ($last_hop-1); $hop++) {
+                    my $gw=$reverse{$ip}{$hop};
+                    $gateway{$subnets{$gw}}=$gw;
+               }
+               if (exists $reverseroute{$ip}) {
+                    my $route=$reverseroute{$ip};
+                    $route{$subnets{$reverse{$ip}{($last_hop-1)}}}{$subnets{$route}}=$route;
+               }
+          my $hop=$route{$ip}{$ip};
+          }
+     }
 }
 
 #
@@ -235,7 +248,7 @@ while( <$in> )
           } else {
                my ($key,@x)=(sort keys %{$ips{$subnet}});
                $gatewayname=$hosts{$key};
-	       print "KEY=$key,gatewayname=$gatewayname\n" if ($debug);
+               print "KEY=$key,gatewayname=$gatewayname\n" if ($debug);
           }       
           s/DEFAULTGATEWAY${subnet}/${gatewayname}/g;
      } 
