@@ -32,7 +32,6 @@ view result 'map.html' in a webbrowser.
 note: be sure you have installed nmap!\n\n";
 exit 0;
 }
-    
 
 #
 # Get networks if non were specified
@@ -209,7 +208,17 @@ foreach my $subnet (@subnets) {
 }
 
 #
-# 
+# Get host IP(s)
+my @data=`ip add | grep inet | grep -v 127.0.0.1`;
+my @hostips;
+foreach my $hostip (@data) {
+     print $hostip if ($debug);
+     push(@hostips,$1) if ($hostip =~ /inet\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\/\d{1,3}\s/);
+}
+my $hostip=join("|".@hostips);
+
+#
+# get default gateways
 foreach my $subnet (sort keys %subnets) {
      foreach my $ip (sort keys %{$ips{$subnet}}) {
           my ($last_hop,@dummy)=(sort keys %{$reverse{$ip}});
@@ -218,12 +227,27 @@ foreach my $subnet (sort keys %subnets) {
                     my $gw=$reverse{$ip}{$hop};
                     $gateway{$subnets{$gw}}=$gw;
                }
+           }
+     }
+} 
+
+#
+# get routes
+foreach my $subnet (sort keys %subnets) {
+     foreach my $ip (sort keys %{$ips{$subnet}}) {
+          my ($last_hop,@dummy)=(sort keys %{$reverse{$ip}});
+          if ($last_hop > 1) {
                if (exists $reverseroute{$ip}) {
                     my $route=$reverseroute{$ip};
                     $route{$route}=$reverse{$ip}{($last_hop-1)}   
                }
           }
           if ($route{$ip}{$last_hop} =~ /^$ip$/) {
+               if ($last_hop = 1) {
+                    $route{$ip}=$route{$ip}{($last_hop-1)};
+               } else {
+                    $route{$ip}=$route{$ip}{($last_hop-1)};
+               }       
                print $last_hop."\n";
           }  
      }
