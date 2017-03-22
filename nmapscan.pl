@@ -116,7 +116,7 @@ foreach my $subnet (@subnets) {
                     # Parse route    
                     if ($line =~ /^\s*(\d+)\s+([a-z0-9\.\-]+)\s+\((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\)\s(.+)$/i) {
                          my ($hop,$name,$ip,$rest)=($1,$2,$3,$4);
-                         $reverseroute{$ipaddress}=$3 if ($rest =~ /\s!H\s/);
+                         $reverseroute{$ipaddress}=$ip if ($rest =~ /\s!H\s/);
                          $route{$ipaddress}{$hop}=$ip;
                          $reverse{$ipaddress}{$ip}=$hop;
                          push(@route,"\[$name ($ip)\]");
@@ -220,10 +220,12 @@ foreach my $subnet (sort keys %subnets) {
                }
                if (exists $reverseroute{$ip}) {
                     my $route=$reverseroute{$ip};
-                    $route{$subnets{$reverse{$ip}{($last_hop-1)}}}{$subnets{$route}}=$route;
+                    $route{$route}=$reverse{$ip}{($last_hop-1)}   
                }
-          my $hop=$route{$ip}{$ip};
           }
+          if ($route{$ip}{$last_hop} =~ /^$ip$/) {
+               print $last_hop."\n";
+          }  
      }
 }
 
