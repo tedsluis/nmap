@@ -34,18 +34,21 @@ exit 0;
 }
 
 #
-# Get networks if non were specified
-if (!$ipaddresses) {
-     my @data=`ip add | grep inet | grep -v 127.0.0.1`;
-     my @subnets;
-     foreach my $subnet (@data) {
-           print $subnet if ($debug);
-           push(@subnets,$1) if ($subnet =~ /inet\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\/\d{1,3})\s/);
+# Get host IP(s), interfaces and subnets
+my @data=`ip add | grep inet | grep -v 127.0.0.1`;
+my %hostips;
+foreach my $hostip (@data) {
+     print $hostip if ($debug);
+     if ($hostip =~ /inet\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(\/\d{1,3})\s.+\s([a-z0-9\-]+)$/i) {
+          # Get IP's and interface name
+          $hostips{$1}=$3;
+          # Get networks if non were specified
+          push(@subnets,$1.$2) if (!$ipaddresses);
      }
-     $ipaddresses=join(",",@subnets);
 }
+$ipaddresses=join(",",@subnets) if (@subnets);
 print $ipaddresses."\n";
- 
+
 # 
 # Scan subnets
 my @node;
@@ -55,6 +58,8 @@ my %host;
 my %route;
 my %reverse;
 my %reverseroute;
+my %interface;
+my %interfacesubnet;
 my %hosts;    # hosts{ip} => ip+name
 my %ips;      # ips{subnet}{ip} => ip+name
 my %subnets;  # subnets{ip} => subnet
@@ -109,26 +114,36 @@ foreach my $subnet (@subnets) {
                     }
                }
                my @route;
-               my @traceroute=`traceroute $ipaddress`;
-               foreach my $line (@traceroute) {
-                    chomp($line);
-                    # Parse route    
-                    if ($line =~ /^\s*(\d+)\s+([a-z0-9\.\-]+)\s+\((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\)\s(.+)$/i) {
-                         my ($hop,$name,$ip,$rest)=($1,$2,$3,$4);
-                         $reverseroute{$ipaddress}=$ip if ($rest =~ /\s!H\s/);
-                         $route{$ipaddress}{$hop}=$ip;
-                         $reverse{$ipaddress}{$ip}=$hop;
-                         push(@route,"\[$name ($ip)\]");
-                         print "HOP=$name $ip\n" if ($debug);
-                         # Store gateway subnet.
-                         if ($hop !~ /^1$/) {
-                              $gateway{$subnets{$ip}} = $ip if ((exists $subnets{$ip}) && (!exists $gateway{$subnets{$ip}}));
-                              if ($route[0] =~ /\((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\)/) {
-                                    $gateway{$subnets{$1}} = $1 if ((exists $subnets{$1}) && (!exists $gateway{$subnets{$1}}));
+               foreach my $hostip (keys %hostip) {
+                    next if ((exists $interface{$hostip}) && (exists $interface{$hostip}{$subnet}) && ($interface{$hostip}{$subnet} =~ /UNREACHABLE/));
+                    my @traceroute=`traceroute -i $hostip{$hostip} $ipaddress`;
+                    foreach my $line (@traceroute) {
+                         chomp($line);
+                         if ($line =~ /^\s*\d+\s+\*\s+\*\s+\*/) {
+                              $interface{$hostip}{$subnet}="UNREACHABLE" if (! exists $interface{$hostip}{$subnet});
+                              next;
+                         }
+                         # Parse route    
+                         if ($line =~ /^\s*(\d+)\s+([a-z0-9\.\-]+)\s+\((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\)\s(.+)$/i) {
+                              my ($hop,$name,$ip,$rest)=($1,$2,$3,$4);
+                              $reverseroute{$ipaddress}=$ip if ($rest =~ /\s!H\s/);
+                              $trace{$ipaddress}{$hop}=$ip;
+                              $reverse{$ipaddress}{$ip}=$hop;
+                              push(@route,"\[$name ($ip)\]");
+                              print "HOP=$name $ip\n" if ($debug);
+                              # Store gateway subnet.
+                              if ($hop !~ /^1$/) {
+                                   $gateway{$subnets{$ip}} = $ip if ((exists $subnets{$ip}) && (!exists $gateway{$subnets{$ip}}));
+                                   if ($route[0] =~ /\((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\)/) {
+                                         $gateway{$subnets{$1}} = $1 if ((exists $subnets{$1}) && (!exists $gateway{$subnets{$1}}));
+                                   }
                               }
+                              # subnet is reachable using hostip
+                              $interface{$hostip}{$subnet}=$hostip{$hostip};
+                              $interfacesubnet{$subnet}=$hostip;
                          }
                     }
-               }
+               }    
                push(@desc,"Route: ".join("-->",@route));
                next;
           } elsif ($line =~ /MAC\sAddress:\s([0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2})\s+\((.+)\)$/i) {
@@ -203,28 +218,16 @@ foreach my $subnet (@subnets) {
           }
           $info.="$line\n";
      }
-
-
 }
-
-#
-# Get host IP(s)
-my @data=`ip add | grep inet | grep -v 127.0.0.1`;
-my @hostips;
-foreach my $hostip (@data) {
-     print $hostip if ($debug);
-     push(@hostips,$1) if ($hostip =~ /inet\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\/\d{1,3}\s/);
-}
-my $hostip=join("|".@hostips);
 
 #
 # get default gateways
 foreach my $subnet (sort keys %subnets) {
-     foreach my $ip (sort keys %{$ips{$subnet}}) {
-          my ($last_hop,@dummy)=(sort keys %{$reverse{$ip}});
+     foreach my $ipaddress (sort keys %{$ips{$subnet}}) {
+          my ($last_hop,@dummy)=(reverse sort keys %{$trace{$ipaddress}});
           if ($last_hop > 1) {
-               for (my $hop = 1; $hop < ($last_hop-1); $hop++) {
-                    my $gw=$reverse{$ip}{$hop};
+               for (my $hop = 1; $hop < $last_hop; $hop++) {
+                    my $gw=$trace{$ipaddress}{$hop};
                     $gateway{$subnets{$gw}}=$gw;
                }
            }
@@ -234,19 +237,20 @@ foreach my $subnet (sort keys %subnets) {
 #
 # get routes
 foreach my $subnet (sort keys %subnets) {
-     foreach my $ip (sort keys %{$ips{$subnet}}) {
-          my ($last_hop,@dummy)=(sort keys %{$reverse{$ip}});
+     foreach my $ipaddress (sort keys %{$ips{$subnet}}) {
+          my ($last_hop,@dummy)=(sort keys %{$reverse{$ipaddress}});
           if ($last_hop > 1) {
-               if (exists $reverseroute{$ip}) {
-                    my $route=$reverseroute{$ip};
-                    $route{$route}=$reverse{$ip}{($last_hop-1)}   
+               if (exists $reverseroute{$ipaddress}) {
+                    my $route=$reverseroute{$ipaddress};
+                    $route{$route}=$trace{$ipaddress}{($last_hop-1)}   
                }
           }
-          if ($route{$ip}{$last_hop} =~ /^$ip$/) {
+          if ($trace{$ipaddress}{$last_hop} =~ /^$ipaddress$/) {
                if ($last_hop = 1) {
-                    $route{$ip}=$route{$ip}{($last_hop-1)};
+                     my $hostip=$interfacesubnet{$subnet};
+                     $route{$ipaddress}=$gateway{$subnets{$hostip}} if ($subnets{$ipaddress} !~ /^$subnets{$hostip}$/);
                } else {
-                    $route{$ip}=$route{$ip}{($last_hop-1)};
+                    $route{$ipaddress}=$route{$ipaddress}{($last_hop-1)};
                }       
                print $last_hop."\n";
           }  
