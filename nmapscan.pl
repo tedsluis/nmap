@@ -185,14 +185,13 @@ sub TraceRoute(@) {
                }
           }
      }    
-     print "\n".join("-->",@route)."\n" if ($debug);    
      return @route;
 }
 
 #
 # Scan subnets
 foreach my $subnet (@subnets) {
-     print "Start scanning SUBNET=$subnet\n" if ($debug);
+     print "~~~~~~~~~~~~~~~~~ Start scanning SUBNET=$subnet ~~~~~~~~~~~~~~~~~\n" if ($debug);
      my @data=`nmap -O -n $subnet`;
      my $info="";
      my @key;
@@ -224,7 +223,7 @@ foreach my $subnet (@subnets) {
                $ipaddress=$1;
                $host{$ipaddress}{'subnet'}=$subnet;
                $subnets{$ipaddress}=$subnet;
-               print "SCAN HOST IP =$ipaddress, subnet=$subnet\n" if ($debug);
+               print "++++++++++++++ SCAN HOST IP =$ipaddress, subnet=$subnet +++++++++++++++++\n" if ($debug);
                push(@key,$1);
                #
                # get hostname
@@ -240,7 +239,9 @@ foreach my $subnet (@subnets) {
                          print "HOSTNAME=$1\n" if ($debug);
                     }
                }
-               push(@desc,"Route: ".join("-->",TraceRoute($ipaddress,$subnet)));
+               my $route=join("-->",TraceRoute($ipaddress,$subnet));
+               print "\nROUTE=$route\n" if ($debug);    
+               push(@desc,"Route: $route");
                next;
           } elsif ($line =~ /MAC\sAddress:\s([0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2})\s+\((.+)\)$/i) {
                $host{$ipaddress}{'mac'}=$1;
@@ -318,6 +319,7 @@ foreach my $subnet (@subnets) {
 
 #
 # Scan subnets
+print "--------------- SCAN SUBNETS -------------------------------\n";
 foreach my $subnet (sort keys %cidr) {
      my ($n1,$n2,$n3,$n4)=($1,$2,$3,$4) if ($cidr{$subnet}{'network'}   =~ /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
      my ($b1,$b2,$b3,$b4)=($1,$2,$3,$4) if ($cidr{$subnet}{'broadcast'} =~ /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
@@ -329,9 +331,9 @@ foreach my $subnet (sort keys %cidr) {
                          next if (($ip =~ /^$cidr{$subnet}{'network'}$/) || ($ip =~ /^$cidr{$subnet}{'broadcast'}$/)); 
                          next if ((exists $subnets{$ip}) || (exists $cidr{$subnet}{'scanned_non_existing_ip'}));
                          $subnets{$ip}=$subnet;
-                         my $route=join("-->",TraceRoute($ip,$subnet)); 
                          $cidr{$subnet}{'scanned_non_existing_ip'}="yes";
-                         print "START=$cidr{$subnet}{'network'}, END=$cidr{$subnet}{'broadcast'}, IP=$ip, ROUTE=$route\n";
+                         print "--------------------->>> START=$cidr{$subnet}{'network'}, END=$cidr{$subnet}{'broadcast'}, IP=$ip, ROUTE=";
+                         print join("-->",TraceRoute($ip,$subnet))."\n"; 
                     }
                }
           }
@@ -340,6 +342,7 @@ foreach my $subnet (sort keys %cidr) {
 
 #
 # get default gateways
+print "--------------- GATEWAYS -------------------------------\n";
 foreach my $ipaddress (sort keys %subnets) {
      my $subnet=$subnets{$ipaddress};
      my ($last_hop,@dummy)=(reverse sort keys %{$trace{$ipaddress}});
@@ -365,6 +368,7 @@ foreach my $ipaddress (sort keys %subnets) {
 
 #
 # get routes
+print "--------------- ROUTES -------------------------------\n";
 foreach my $ipaddress (sort keys %subnets) {
      my $subnet=$subnets{$ipaddress};
      my ($last_hop,@dummy)=(reverse sort keys %{$trace{$ipaddress}});
