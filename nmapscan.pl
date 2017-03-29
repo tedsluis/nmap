@@ -4,12 +4,12 @@ use Getopt::Long;
 #
 # Input parameters
 my $help;
-my $ipaddresses;
+my $cidrs;
 my $debug;
 GetOptions(
      "help!"=>\$help,
      "debug!"=>\$debug,
-     "subnets=s"=>\$ipaddresses
+     "subnets=s"=>\$cidrs
 ) or exit(1);
 #
 # Help
@@ -82,7 +82,7 @@ foreach my $hostip (@data) {
           $hostips{$1}=$3;
           print "Interface=$3 (ip=$1)\n";
           # Get networks if non were specified
-          push(@subnets,$1.$2) if (!$ipaddresses);
+          push(@subnets,$1.$2) if (!$cidrs);
      }
 }
 
@@ -97,15 +97,15 @@ print "Host gateway=$hostgateway\n";
 
 #
 # Get CIDR, network address & broadcast address
-$ipaddresses=join(",",@subnets) if (@subnets);
+$cidrs=join(",",@subnets) if (@subnets);
 print "Subnets to be scanned:\n";
-my @ipaddresses=split(/,/,$ipaddresses);
+my @cidrs=split(/,/,$cidrs);
 my %cidr;
 @subnets=();
-foreach my $subnet (@ipaddresses) {
+foreach my $subnet (@cidrs) {
     # Validate CIDR
     if ($subnet !~ /(^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\/\d{1,2}$)/) {
-         print "CIDR '$1' is invalid!\n";
+         print "Error: CIDR '$1' is invalid!\n";
          exit 1;
     }
     # 10.0.0.0/24 192.168.1.0/16
