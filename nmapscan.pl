@@ -74,15 +74,16 @@ exit 0;
 # Get host IP(s), interfaces and subnets
 my @data=`ip add | grep inet | grep -v inet6 | grep -v 127.0.0.1`;
 my %hostips;
-my @subnets;
+my @cidrs;
+@cidrs=split(/,/,$cidrs) if ($cidrs);
 foreach my $hostip (@data) {
      print $hostip if ($debug);
-     if ($hostip =~ /inet\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(\/\d{1,3})\s.+\s([a-z0-9\-]+)$/i) {
+     if ($hostip =~ /inet\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\/(\d{1,3})\s.+\s([a-z0-9\-]+)$/i) {
           # Get IP's and interface name
           $hostips{$1}=$3;
           print "Interface=$3 (ip=$1)\n";
           # Get networks if non were specified
-          push(@subnets,$1.$2) if (!$cidrs);
+          push(@cidrs,"$1/$2") if ((!$cidrs) || (($cidrs) && ($cidrs !~ /^$1\/$2$/)));
      }
 }
 
@@ -96,42 +97,6 @@ foreach my $line (@data) {
 print "Host gateway=$hostgateway\n";
 
 #
-# Get CIDR, network address & broadcast address
-$cidrs=join(",",@subnets) if (@subnets);
-print "Subnets to be scanned:\n";
-my @cidrs=split(/,/,$cidrs);
-my %cidr;
-@subnets=();
-foreach my $subnet (@cidrs) {
-    # Validate CIDR
-    if ($subnet !~ /(^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\/\d{1,2}$)/) {
-         print "Error: CIDR '$1' is invalid!\n";
-         exit 1;
-    }
-    # 10.0.0.0/24 192.168.1.0/16
-    my($subnetwork, $netbit)=split(m'/',$subnet);
-    # Decimal representation of mask
-    my $mask  = (2 ** $netbit - 1) << (32 - $netbit); 
-    # Convert decimal representation to ip format
-    my $netmask = join( '.', unpack( "C4", pack( "N", $mask ) ) );
-    # Split to decimals
-    my ($ip1,$ip2,$ip3,$ip4)=($1,$2,$3,$4) if ($subnet  =~ /\s*(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})\/\d{1,2}\s*/);
-    my ($ma1,$ma2,$ma3,$ma4)=($1,$2,$3,$4) if ($netmask =~ /\s*(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})\s*/);
-    # Convert to bits
-    my ($ip)      = unpack( "N", pack( "C4", $ip1,$ip2,$ip3,$ip4 ) );
-    my ($mask)    = unpack( "N", pack( "C4", $ma1,$ma2,$ma3,$ma4 ) );
-    my ($fullmask)= unpack( "N", pack( "C4", 255,255,255,255 ) );
-    # Calculate network and broadcast, convert to ip format
-    my $network   = join( '.', unpack( "C4", pack( "N", ( $ip & $mask ) ) ) );
-    my $broadcast = join( '.', unpack( "C4", pack( "N", ( $ip | ($fullmask ^ $mask )) ) ) );
-    print "  $subnet (subnetwork=$subnetwork, netbit=$netbit, subnetmask=$netmask, network=$network broadcast=$broadcast)\n";
-    $cidr{"$subnetwork/$netbit"}{'subnetmask'}=$netmask;
-    $cidr{"$subnetwork/$netbit"}{'network'}=$network;
-    $cidr{"$subnetwork/$netbit"}{'broadcast'}=$broadcast;
-    push(@subnets,"$subnetwork/$netbit");
-}
-
-# 
 # Initialize variables
 my @node;
 my @link;
@@ -146,6 +111,56 @@ my %hosts;    # hosts{ip} => ip+name
 my %ips;      # ips{subnet}{ip} => ip+name
 my %subnets;  # subnets{ip} => subnet
 my %gateway;  # gateway{subnet} => ip gateway
+my %cidr;
+my %subnet2ip;
+my %ip2subnet;
+my @subnets;
+
+#
+# Get CIDR, network address & broadcast address
+foreach my $subnet (@cidrs) {
+     # Validate CIDR
+     if ($subnet !~ /(^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\/\d{1,2}$)/) {
+          print "Error: CIDR '$1' is invalid!\n";
+          exit 1;
+     }
+     # 10.0.0.0/24 192.168.1.0/16
+     my($subnetwork, $netbit)=split(m'/',$subnet);
+     # Decimal representation of mask
+     my $mask  = (2 ** $netbit - 1) << (32 - $netbit); 
+     # Convert decimal representation to ip format
+     my $netmask = join( '.', unpack( "C4", pack( "N", $mask ) ) );
+     # Split to decimals
+     my ($ip1,$ip2,$ip3,$ip4)=($1,$2,$3,$4) if ($subnet  =~ /\s*(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})\/\d{1,2}\s*/);
+     my ($ma1,$ma2,$ma3,$ma4)=($1,$2,$3,$4) if ($netmask =~ /\s*(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})\s*/);
+     # Convert to bits
+     my ($ip)      = unpack( "N", pack( "C4", $ip1,$ip2,$ip3,$ip4 ) );
+     my ($mask)    = unpack( "N", pack( "C4", $ma1,$ma2,$ma3,$ma4 ) );
+     my ($fullmask)= unpack( "N", pack( "C4", 255,255,255,255 ) );
+     # Calculate network and broadcast, convert to ip format
+     my $network   = join( '.', unpack( "C4", pack( "N", ( $ip & $mask ) ) ) );
+     my $broadcast = join( '.', unpack( "C4", pack( "N", ( $ip | ($fullmask ^ $mask )) ) ) );
+     next if (exists $cidr{"$network/$netbit"});
+     $cidr{"$network/$netbit"}{'subnetmask'}=$netmask;
+     $cidr{"$network/$netbit"}{'network'}=$network;
+     $cidr{"$network/$netbit"}{'broadcast'}=$broadcast;
+     push(@subnets,"$network/$netbit");
+     # Determine IP's per subnet
+     my ($n1,$n2,$n3,$n4)=($1,$2,$3,$4) if ($cidr{"$network/$netbit"}{'network'}   =~ /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+     my ($b1,$b2,$b3,$b4)=($1,$2,$3,$4) if ($cidr{"$network/$netbit"}{'broadcast'} =~ /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+     for (my $ip1 = $n1; $ip1 <= $b1; $ip1++) {
+          for (my $ip2 = $n2; $ip2 <= $b2; $ip2++) {
+               for (my $ip3 = $n3; $ip3 <= $b3; $ip3++) {
+                    for (my $ip4 = $n4; $ip4 <= $b4; $ip4++) {
+                         my $ip="$ip1.$ip2.$ip3.$ip4";
+                         $subnet2ip{$subnet}{$ip}="";
+                         $ip2subnet{$ip}=$subnet;
+                    }
+               }
+          }
+     }
+     print "  $subnet (subnetwork=$network/$netbit, netbit=$netbit, subnetmask=$netmask, network=$network, broadcast=$broadcast), number of IP's=".(((keys %{$subnet2ip{$subnet}})-2)||1)."\n";
+}
 
 #
 # subroutine traceroute
@@ -168,17 +183,43 @@ sub TraceRoute(@) {
                # Parse route    
                if ($line =~ /^\s*(\d+)\s+([a-z0-9\.\-]+)\s+\((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\)\s(.+)$/i) {
                     my ($hop,$name,$ip,$rest)=($1,$2,$3,$4);
+                    $subnets{$ip}=$ip2subnet{$ip} if ((!exists $subnets{$ip}) && (exists $ip2subnet{$ip}));
                     $trace{$ipaddress}{$hop}=$ip;
                     $reverse{$ipaddress}{$ip}=$hop;
                     push(@route,"\[$name ($ip)\]");
-                    print "IPADDRESS=$ipaddress ---> HOP=$name $ip ($hop)  [via: interface=$hostips{$hostip} ($hostip)]\n" if ($debug);
+                    print "    IPADDRESS=$ipaddress ---> HOP=$name $ip ($hop)  [via: interface=$hostips{$hostip} ($hostip)]\n" if ($debug);
                     # Store gateway subnet.
-                    #if ($hop !~ /^1$/) {
-                    #     $gateway{$subnets{$ip}} = $ip if ((exists $subnets{$ip}) && (!exists $gateway{$subnets{$ip}}));
-                    #     if ($route[0] =~ /\((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\)/) {
-                    #           $gateway{$subnets{$1}} = $1 if ((exists $subnets{$1}) && (!exists $gateway{$subnets{$1}}));
-                    #     }
-                    # }
+                    if ($hop > 1) {
+			    #print "Debug: ipaddres=$ipaddress,hop=$hop,name=$name,ip=$ip,rest=$rest\n";
+			    #print "hop (".($hop).")=$trace{$ipaddress}{($hop)}\n" if ((exists $trace{$ipaddress}) && (exists $trace{$ipaddress}{($hop)}));
+			    #print "hop-1 (".($hop-1).")=$trace{$ipaddress}{($hop-1)}\n" if ((exists $trace{$ipaddress}) && (exists $trace{$ipaddress}{($hop-1)}));
+                         if (($rest =~ /\s!H\s/) && (exists $trace{$ipaddress}) && (exists $trace{$ipaddress}{$hop-1})){
+                              $route{$ip}=$trace{$ipaddress}{$hop-1};
+                              print "      ROUTE FOUND: $ip in subnet $subnets{$ip} to gateway $trace{$ipaddress}{$hop-1} in subnet $subnets{$trace{$ipaddress}{$hop-1}} (HOP=$hop)\n";
+                         }
+                         if ((exists $trace{$ipaddress}{($hop-1)}) && ($trace{$ipaddress}{($hop-1)} =~ /(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/)) {
+                              my $gw=$trace{$ipaddress}{($hop-1)};
+                              if (exists $subnets{$gw}) {
+                                   $gateway{$subnets{$gw}} = $gw;
+                                   print "      GATEWAY FOUND: $gw in $subnets{$gw} (HOP=$hop)\n";
+                              } else { 
+                                   print "      NO GATEWAY FOUND: (hop=$hop), ip $gw not jet scanned.\n";
+                              }
+                         } else {
+                              print "      NO GATEWAY FOUND: (HOP=$hop)\n";
+                         }
+                    } else {
+                         if ((exists $subnets{$ip}) && (exists $subnets{$hostip}) && ($subnets{$ip} !~ /^$subnets{$hostip}$/) && (exists $gateway{$subnets{$hostip}})) {
+                              $route{$ip}=$gateway{$subnets{$hostip}};
+                              print "      ROUTE FOUND: $ip in subnet $subnets{$ip} to $gateway{$hostip} in subnet $subnets{$hostip} (HOP=1) \n";
+                         }
+                         if ($subnets{$hostgateway} =~ /^$subnet$/) {
+                              $gateway{$subnet}=$hostgateway;
+                              print "      GATEWAY FOUND: $hostgateway in subnet $subnets{$hostgateway} (HOP=1) (host gateway)\n";
+                         } else {
+                              print "      NO GATEWAY FOUND (HOP=1)\n";
+                         }
+                    }
                     # subnet is reachable using hostip
                     $interface{$hostip}{$subnet}=$hostips{$hostip};
                     $interfacesubnet{$subnet}=$hostip;
@@ -222,6 +263,7 @@ foreach my $subnet (@subnets) {
                # parse IP address  
                $ipaddress=$1;
                $host{$ipaddress}{'subnet'}=$subnet;
+               $host{$ipaddress}{'color'}='lightyellow';
                $subnets{$ipaddress}=$subnet;
                print "++++++++++++++ SCAN HOST IP =$ipaddress, subnet=$subnet +++++++++++++++++\n" if ($debug);
                push(@key,$1);
@@ -234,8 +276,8 @@ foreach my $subnet (@subnets) {
                     if ($line =~ /in-addr\.arpa\s+name\s=\s(.+)\.$/){
                          $host{$ipaddress}{'hostname'}=$1;
                          push(@key,$1);
-                         $host{$ipaddress}{'color'}='lightblue' if (! exists $host{$ipaddress}{'color'});
-                         $color="lightblue";
+                         $host{$ipaddress}{'color'}='lightcyan' if (! exists $host{$ipaddress}{'color'});
+                         $color="lightcyan";
                          print "HOSTNAME=$1\n" if ($debug);
                     }
                }
@@ -318,72 +360,31 @@ foreach my $subnet (@subnets) {
 }
 
 #
-# Scan subnets
-print "--------------- SCAN SUBNETS -------------------------------\n";
+# Trace a non scanned IP in every subnets
+print "--------------- TRACEROUTE a non scanned IP in every subnet -------------------------------\n";
 foreach my $subnet (sort keys %cidr) {
-     my ($n1,$n2,$n3,$n4)=($1,$2,$3,$4) if ($cidr{$subnet}{'network'}   =~ /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
-     my ($b1,$b2,$b3,$b4)=($1,$2,$3,$4) if ($cidr{$subnet}{'broadcast'} =~ /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
-     for (my $ip1 = $n1; $ip1 <= $b1; $ip1++) {
-          for (my $ip2 = $n2; $ip2 <= $b2; $ip2++) {
-               for (my $ip3 = $n3; $ip3 <= $b3; $ip3++) {
-                    for (my $ip4 = $n4; $ip4 <= $b4; $ip4++) {
-                         my $ip="$ip1.$ip2.$ip3.$ip4";
-                         next if (($ip =~ /^$cidr{$subnet}{'network'}$/) || ($ip =~ /^$cidr{$subnet}{'broadcast'}$/)); 
-                         next if ((exists $subnets{$ip}) || (exists $cidr{$subnet}{'scanned_non_existing_ip'}));
-                         $subnets{$ip}=$subnet;
-                         $cidr{$subnet}{'scanned_non_existing_ip'}="yes";
-                         print "--------------------->>> START=$cidr{$subnet}{'network'}, END=$cidr{$subnet}{'broadcast'}, IP=$ip, ROUTE=";
-                         print join("-->",TraceRoute($ip,$subnet))."\n"; 
-                    }
-               }
-          }
+     foreach my $ip (keys %{$subnet2ip{$subnet}}) {
+          next if (($ip =~ /^$cidr{$subnet}{'network'}$/) || ($ip =~ /^$cidr{$subnet}{'broadcast'}$/)); 
+          next if ((exists $subnets{$ip}) || (exists $cidr{$subnet}{'scanned_non_existing_ip'}));
+          $subnets{$ip}=$subnet;
+          $cidr{$subnet}{'scanned_non_existing_ip'}="yes";
+          print "--------------------->>> START=$cidr{$subnet}{'network'}, END=$cidr{$subnet}{'broadcast'}, IP=$ip\n";
+          print "  ".join("-->",TraceRoute($ip,$subnet))."\n"; 
      }
 }
 
 #
-# get default gateways
-print "--------------- GATEWAYS -------------------------------\n";
-foreach my $ipaddress (sort keys %subnets) {
-     my $subnet=$subnets{$ipaddress};
-     my ($last_hop,@dummy)=(reverse sort keys %{$trace{$ipaddress}});
-     if ($last_hop > 1) {
-          for (my $hop = 1; $hop < $last_hop; $hop++) {
-               my $gw=$trace{$ipaddress}{$hop};
-               if ($subnets{$gw} =~ /^$subnet$/) {       
-                    $gateway{$subnets{$gw}}=$gw;
-                    print "GATEWAY: IP=$ipaddress ($subnets{$ipaddress}) ---> GATEWAY=$gw ($subnets{$gw}) (HOP=$hop ,LAST_HOP=$last_hop)\n";
-               } else {
-                    print "NO GATEWAY: IP=$ipaddress ($subnet) (HOP=1 ,LAST_HOP=$last_hop)\n";
-               }    
-          }
-      } else {
-          if ($subnets{$hostgateway} =~ /^$subnet$/) {
-               $gateway{$subnet}=$hostgateway;
-               print "GATEWAY: IP=$ipaddress ($subnet) ---> GATEWAY=$hostgateway ($subnets{$hostgateway}) (HOP=1)\n";
-          } else {
-               print "NO GATEWAY: IP=$ipaddress ($subnet) (HOP=1)\n";
-          }
-      }
-} 
+# Scan internet gateway
+print "--------------- SCAN INTERNET GATEWAY -------------------------------\n";
+print "INTERNET GATEWAY  ".join("-->",TraceRoute("8.8.8.8","8.8.8.8/31"))."\n";
 
 #
-# get routes
-print "--------------- ROUTES -------------------------------\n";
+# get default gateways & routes
+print "--------------- RESCAN GATEWAYS & ROUTES -------------------------------\n";
 foreach my $ipaddress (sort keys %subnets) {
      my $subnet=$subnets{$ipaddress};
-     my ($last_hop,@dummy)=(reverse sort keys %{$trace{$ipaddress}});
-     print "  IPADDRESS=$ipaddress, SUBNET=$subnet, LAST_HOP=$last_hop\n";
-     if ($trace{$ipaddress}{$last_hop} =~ /^$ipaddress$/) {
-          if ($last_hop = 1) {
-                my $hostip=$interfacesubnet{$subnet};
-                $route{$ipaddress}=$gateway{$subnets{$hostip}} if ($subnets{$ipaddress} !~ /^$subnets{$hostip}$/);
-          } else {
-               my $gateway=$trace{$ipaddress}{($last_hop-1)};
-               $route{$ipaddress}=$gateway if (($subnets{$ipaddress} !~ /^$subnets{$gateway}$/) && ($reverse{$ipaddress}{$ipaddress} =~ $reverse{$ipaddress}{$gateway}));
-          }       
-          print "ROUTE: ipaddress=$ipaddress ($subnet) ---> gateway=$route{$ipaddress} ($subnets{$route{$ipaddress}}) \n";
-     }  
-}
+     print "  IP=$ipaddress  ".join("-->",TraceRoute($ipaddress,$subnet))."\n\n";
+} 
 
 my @nodes;
 my @links;
@@ -391,25 +392,51 @@ foreach my $ipaddress (sort keys %subnets) {
      my @desc;
      my $subnet=$subnets{$ipaddress};
      push(@desc,"Subnet: $subnet");
-     push(@desc,"Device type: $host{$ipaddress}{'devicetype'}") if (exists $host{$ipaddress}{'devicetype'});
-     push(@desc,"Running: $host{$ipaddress}{'running'}")        if (exists $host{$ipaddress}{'running'});
-#$host{$ipaddress}{'hostname'}
-     push(@desc,"MAC: $host{$ipaddress}{'mac'}")                if (exists $host{$ipaddress}{'mac'});
-     push(@desc,"Vendor: $host{$ipaddress}{'vendor'}")          if (exists $host{$ipaddress}{'vendor'});
-     push(@desc,"Status: $host{$ipaddress}{'status'}")          if (exists $host{$ipaddress}{'status'});
-     push(@desc,"Latency: $host{$ipaddress}{'latency'}")        if (exists $host{$ipaddress}{'latency'});
-     push(@desc,"Hops: $host{$ipaddress}{'hops'}")              if (exists $host{$ipaddress}{'hops'});
-     push(@desc,"OC CPE: $host{$ipaddress}{'oc_cpe'}")          if (exists $host{$ipaddress}{'oc_cpe'});
-     push(@desc,"OS Details: $host{$ipaddress}{'os_details'}")  if (exists $host{$ipaddress}{'os_details'});
-#@{$fact{$ipaddress}}  
-     push(@nodes,"{ key: \"${ipaddress}\", desc: \"".join("\\n",@desc)."\", color: \"$host{$ipaddress}{'color'}\", category: \"simple\" }");
-     push(@links,"{ from: \"$ipaddress\", to: \"".$gateway{$subnets{$ipaddress}}."\" }");          
+     push(@desc,"Device type: $host{$ipaddress}{'devicetype'}") if  (exists $host{$ipaddress}{'devicetype'});
+     push(@desc,"Running: $host{$ipaddress}{'running'}")        if  (exists $host{$ipaddress}{'running'});
+     push(@desc,"MAC: $host{$ipaddress}{'mac'}")                if  (exists $host{$ipaddress}{'mac'});
+     push(@desc,"Vendor: $host{$ipaddress}{'vendor'}")          if  (exists $host{$ipaddress}{'vendor'});
+     push(@desc,"Status: $host{$ipaddress}{'status'}")          if  (exists $host{$ipaddress}{'status'});
+     push(@desc,"Latency: $host{$ipaddress}{'latency'}")        if  (exists $host{$ipaddress}{'latency'});
+     push(@desc,"Hops: $host{$ipaddress}{'hops'}")              if  (exists $host{$ipaddress}{'hops'});
+     push(@desc,"OC CPE: $host{$ipaddress}{'oc_cpe'}")          if  (exists $host{$ipaddress}{'oc_cpe'});
+     push(@desc,"OS Details: $host{$ipaddress}{'os_details'}")  if  (exists $host{$ipaddress}{'os_details'});
+     push(@desc,"Warnings: ",join("\\n",@{$fact{$ipaddress}}))   if ((exists $fact{$ipaddress}) && (@{$fact{$ipaddress}}));
+     my $name=$ipaddress;
+     $name.=",".$host{$ipaddress}{'hostname'} if (exists $host{$ipaddress}{'hostname'});
+     my $color=$host{$ipaddress}{'color'};
+     $color="lightbrown" if ((exists $host{$ipaddress}{'oc_cpe'}) && ($host{$ipaddress}{'oc_cpe'} =~ /linux/i));
+     $color="green"      if ((exists $host{$ipaddress}{'vendor'}) && ($host{$ipaddress}{'vendor'} =~ /apple/i));
+     $color="lightblue"  if ((exists $host{$ipaddress}{'vendor'}) && ($host{$ipaddress}{'vendor'} =~ /raspberry/i));
+     $color="lightgreen" if ((exists $host{$ipaddress}{'vendor'}) && ($host{$ipaddress}{'vendor'} =~ /intel/i));
+     $color="orange"     if  (exists $route{$ipaddress});
+     $color="red"        if  (exists $gateway{$ipaddress});
+     push(@nodes,"{ key:  \"${name}\", desc: \"".join("\\n",@desc)."\", color: \"$color\", category: \"simple\" }");
+     if (exists $gateway{$subnets{$ipaddress}}) {
+          push(@links,"{ from: \"${name}\", to: \"".$gateway{$subnets{$ipaddress}}."\" }");
+     } else {
+          push(@links,"{ from: \"${name}\", to: \"${name}\" }");
+     }
 }
+foreach my $route (keys %route) {
+     next if (! exists $subnets{$route});
+     my $routename=$route;
+     my $gateway=$route{$route};
+     next if (! exists $subnets{$gateway});
+     $routename.=",".$host{$routename}{'hostname'} if (exists $host{$routename}{'hostname'});
+     $gateway.=",".$host{$gateway}{'hostname'}     if (exists $host{$gateway}{'hostname'});
+     if ($gateway =~ /\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/) {
+          push(@links,"{ from: \"$routename\", to: \"$gateway\" }");
+     } else {
+          push(@links,"{ from: \"$routename\", to: \"$routename\" }");
+     }
+}
+
 
 #
 # Add data to map.html
-my $node= "diagram.model.nodeDataArray = [".join(",",@node)."];";
-my $link= "diagram.model.linkDataArray = [".join(",",@link)."];";
+my $node= "diagram.model.nodeDataArray = [".join(",",@nodes)."];";
+my $link= "diagram.model.linkDataArray = [".join(",",@links)."];";
 
 open my $in,  '<', "map.html.org" or die "Can't read map.html.org file: $!";
 open my $out, '>', "map.html"     or die "Can't write map.html file: $!";
