@@ -98,7 +98,7 @@ function _traverseDOM(node) {
           $(go.TextBlock, { row: 0, column: 0, columnSpan: 2, font: "bold 12pt sans-serif" },
             new go.Binding("text", "key")),
           $(go.TextBlock, { row: 1, column: 0 }, "Basics:"),
-          $(go.TextBlock, { row: 1, column: 1 }, new go.Binding("text", "desc"))
+          $(go.TextBlock, { row: 1, column: 1 }, new go.Binding("text", "basics"))
         )
       ),
       $("Button",
@@ -125,7 +125,7 @@ function _traverseDOM(node) {
           $(go.TextBlock, { row: 0, column: 0, columnSpan: 2, font: "bold 12pt sans-serif" },
             new go.Binding("text", "key")),
           $(go.TextBlock, { row: 1, column: 0 }, "ports:"),
-          $(go.TextBlock, { row: 1, column: 1 }, new go.Binding("text", "desc"))
+          $(go.TextBlock, { row: 1, column: 1 }, new go.Binding("text", "ports"))
         )
       ),
       $("Button",
@@ -152,7 +152,7 @@ var details =
           $(go.TextBlock, { row: 0, column: 0, columnSpan: 2, font: "bold 12pt sans-serif" },
             new go.Binding("text", "key")),
           $(go.TextBlock, { row: 1, column: 0 }, "Details:"),
-          $(go.TextBlock, { row: 1, column: 1 }, new go.Binding("text", "desc"))
+          $(go.TextBlock, { row: 1, column: 1 }, new go.Binding("text", "details"))
         )
       ),
       $("Button",
