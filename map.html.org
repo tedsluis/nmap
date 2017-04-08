@@ -56,36 +56,39 @@ function _traverseDOM(node) {
 
 <h2 id="ChangingCategoryOfPart">Network map</h2>
 <script data-language="javascript" id="changingCategory">
-  function changeCategory(e, obj) {
+  function changeCategory(obj, category) {
     var node = obj.part;
     if (node) {
       var diagram = node.diagram;
       diagram.startTransaction("changeCategory");
-      var cat = diagram.model.getCategoryForNodeData(node.data);
-      if (cat === "simple")
-        cat = "detailed";
-      else
-        cat = "simple";
-      diagram.model.setCategoryForNodeData(node.data, cat);
+      diagram.model.setCategoryForNodeData(node.data, category);
       diagram.commitTransaction("changeCategory");
     }
   }
 
-  var simpletemplate =
+  var name=
     $(go.Node, "Spot",
       $(go.Panel, "Auto",
-        $(go.Shape, "Ellipse",
+        $(go.Shape, "RoundedRectangle",
           new go.Binding("fill", "color")),
         $(go.TextBlock,
           new go.Binding("text", "key"))
       ),
       $("Button",
         { alignment: go.Spot.TopRight },
-        $(go.Shape, "AsteriskLine", { width: 8, height: 8 }),
-        { click: changeCategory })
+        $(go.Shape, "ThinCross", { width: 3, height: 3 }),
+          { click: function(e, obj) { changeCategory(obj,'basics');} }),
+      $("Button",
+        { alignment: go.Spot.TopLeft },
+        $(go.Shape, "ThinCross", { width: 3, height: 3 }),
+          { click: function(e, obj) { changeCategory(obj,'ports');} }),
+      $("Button",
+        { alignment: go.Spot.BottomRight },
+        $(go.Shape, "ThinCross", { width: 3, height: 3 }),
+          { click: function(e, obj) { changeCategory(obj,'details');} })
     );
 
-  var detailtemplate =
+  var basics =
     $(go.Node, "Spot",
       $(go.Panel, "Auto",
         $(go.Shape, "RoundedRectangle",
@@ -94,24 +97,90 @@ function _traverseDOM(node) {
           { defaultAlignment: go.Spot.Left },
           $(go.TextBlock, { row: 0, column: 0, columnSpan: 2, font: "bold 12pt sans-serif" },
             new go.Binding("text", "key")),
-          $(go.TextBlock, { row: 1, column: 0 }, "Description:"),
+          $(go.TextBlock, { row: 1, column: 0 }, "Basics:"),
           $(go.TextBlock, { row: 1, column: 1 }, new go.Binding("text", "desc"))
         )
       ),
       $("Button",
         { alignment: go.Spot.TopRight },
-        $(go.Shape, "AsteriskLine", { width: 8, height: 8 }),
-        { click: changeCategory })
+        $(go.Shape, "CircleLine", { width: 4, height: 4 }),
+          { click: function(e, obj) { changeCategory(obj,'name');} }),
+     $("Button",
+        { alignment: go.Spot.TopLeft },
+        $(go.Shape, "ThinCross", { width: 4, height: 4 }),
+          { click: function(e, obj) { changeCategory(obj,'ports');} }),
+     $("Button",
+        { alignment: go.Spot.BottomRight },
+        $(go.Shape, "ThinCross", { width: 4, height: 4 }),
+          { click: function(e, obj) { changeCategory(obj,'details');} })
     );
 
+  var ports =
+    $(go.Node, "Spot",
+      $(go.Panel, "Auto",
+        $(go.Shape, "RoundedRectangle",
+          new go.Binding("fill", "color")),
+        $(go.Panel, "Table",
+          { defaultAlignment: go.Spot.Right },
+          $(go.TextBlock, { row: 0, column: 0, columnSpan: 2, font: "bold 12pt sans-serif" },
+            new go.Binding("text", "key")),
+          $(go.TextBlock, { row: 1, column: 0 }, "ports:"),
+          $(go.TextBlock, { row: 1, column: 1 }, new go.Binding("text", "desc"))
+        )
+      ),
+      $("Button",
+        { alignment: go.Spot.TopRight },
+        $(go.Shape, "ThinCross", { width: 4, height: 4 }),
+          { click: function(e, obj) { changeCategory(obj,'basics');} }),
+     $("Button",
+        { alignment: go.Spot.TopLeft },
+        $(go.Shape, "CircleLine", { width: 4, height: 4 }),
+          { click: function(e, obj) { changeCategory(obj,'name');} }),
+     $("Button",
+        { alignment: go.Spot.BottomRight },
+        $(go.Shape, "ThinCross", { width: 4, height: 4 }),
+          { click: function(e, obj) { changeCategory(obj,'details');} })
+    );
+
+var details =
+    $(go.Node, "Spot",
+      $(go.Panel, "Auto",
+        $(go.Shape, "RoundedRectangle",
+          new go.Binding("fill", "color")),
+        $(go.Panel, "Table",
+          { defaultAlignment: go.Spot.Right },
+          $(go.TextBlock, { row: 0, column: 0, columnSpan: 2, font: "bold 12pt sans-serif" },
+            new go.Binding("text", "key")),
+          $(go.TextBlock, { row: 1, column: 0 }, "Details:"),
+          $(go.TextBlock, { row: 1, column: 1 }, new go.Binding("text", "desc"))
+        )
+      ),
+      $("Button",
+        { alignment: go.Spot.TopRight },
+        $(go.Shape, "ThinCross", { width: 4, height: 4 }),
+          { click: function(e, obj) { changeCategory(obj,'basics');} }),
+     $("Button",
+        { alignment: go.Spot.TopLeft },
+        $(go.Shape, "ThinCross", { width: 4, height: 4 }),
+          { click: function(e, obj) { changeCategory(obj,'ports');} }),
+     $("Button",
+        { alignment: go.Spot.BottomRight },
+        $(go.Shape, "CircleLine", { width: 4, height: 4 }),
+          { click: function(e, obj) { changeCategory(obj,'name');} })
+    );
+
+
+
   var templmap = new go.Map("string", go.Node);
-  templmap.add("simple", simpletemplate);
-  templmap.add("detailed", detailtemplate);
+  templmap.add("name", name);
+  templmap.add("basiscs", basics);
+  templmap.add("ports", ports);
+  templmap.add("details", details);
   diagram.nodeTemplateMap = templmap;
 
   diagram.layout = $(go.ForceDirectedLayout,{ maxIterations: 200, defaultSpringLength: 30, defaultElectricalCharge: 100 });
 
-diagram.model.nodeDataArray = [ { key: "Install nmap", desc: "yum install nmap (RHEL/CENTOS)\ndnf install nmap (Fedora)\napt-get install nmap (debian/ubuntu)\nOr download it from: https://nmap.org/download.html", color: "lightblue", category: "detailed" },{ key: "Run nmapscan.pl", desc: "e.g. ./nmapscan.pl -ip 192.168.1.0/24", color: "lightgreen", category: "detailed" },{ key: "View map.html", desc: "Refresh this page!\nView your subnet.\nDrag your hosts around.\nToggle the * buttons to view detais.", color: "lightyellow", category: "detailed" }, { key: "Credits", desc: "Ted Sluis\nted.sluis@gmail.com\nhttps://github.com/tedsluis/nmap", color: "lightgray", category: "detailed" }];
+diagram.model.nodeDataArray = [ { key: "Install nmap", desc: "yum install nmap (RHEL/CENTOS)\ndnf install nmap (Fedora)\napt-get install nmap (debian/ubuntu)\nOr download it from: https://nmap.org/download.html", color: "lightblue", category: "details" },{ key: "Run nmapscan.pl", desc: "e.g. ./nmapscan.pl -ip 192.168.1.0/24", color: "lightgreen", category: "details" },{ key: "View map.html", desc: "Refresh this page!\nView your subnet.\nDrag your hosts around.\nToggle the * buttons to view detais.", color: "lightyellow", category: "details" }, { key: "Credits", desc: "Ted Sluis\nted.sluis@gmail.com\nhttps://github.com/tedsluis/nmap", color: "lightgray", category: "details" },{ key: "Install nmap", desc: "yum install nmap (RHEL/CENTOS)\ndnf install nmap (Fedora)\napt-get install nmap (debian/ubuntu)\nOr download it from: https://nmap.org/download.html", color: "lightblue", category: "ports" },{ key: "Run nmapscan.pl", desc: "e.g. ./nmapscan.pl -ip 192.168.1.0/24", color: "lightgreen", category: "ports" },{ key: "View map.html", desc: "Refresh this page!\nView your subnet.\nDrag your hosts around.\nToggle the * buttons to view detais.", color: "lightyellow", category: "ports" }, { key: "Credits", desc: "Ted Sluis\nted.sluis@gmail.com\nhttps://github.com/tedsluis/nmap", color: "lightgray", category: "ports" }];
 diagram.model.linkDataArray = [ { from: "Install nmap", to: "Run nmapscan.pl" },{ from: "Run nmapscan.pl", to: "View map.html" },{ from: "View map.html", to: "Credits" }];
 </script>
 <script>goCode("changingCategory", 1900, 1080)</script>
