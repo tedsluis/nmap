@@ -395,7 +395,7 @@ foreach my $ipaddress (sort keys %subnets) {
 sub NAME(@) {
      my $ipaddress=shift;
      my $name=$ipaddress;
-     $name.=",".$host{$ipaddress}{'hostname'} if (exists $host{$ipaddress}{'hostname'});
+     $name=$host{$ipaddress}{'hostname'}.", ".$name if (exists $host{$ipaddress}{'hostname'});
      return $name;
 }
 
