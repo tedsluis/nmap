@@ -71,7 +71,7 @@ function _traverseDOM(node) {
       $(go.Panel, "Auto",
         $(go.Shape, "RoundedRectangle",
           new go.Binding("fill", "color")),
-        $(go.TextBlock,
+        $(go.TextBlock, { row: 0, column: 0, columnSpan: 2, font: "bold 12pt sans-serif" },
           new go.Binding("text", "key"))
       ),
       $("Button",
@@ -121,7 +121,7 @@ function _traverseDOM(node) {
         $(go.Shape, "RoundedRectangle",
           new go.Binding("fill", "color")),
         $(go.Panel, "Table",
-          { defaultAlignment: go.Spot.Right },
+          { defaultAlignment: go.Spot.Left },
           $(go.TextBlock, { row: 0, column: 0, columnSpan: 2, font: "bold 12pt sans-serif" },
             new go.Binding("text", "key")),
           $(go.TextBlock, { row: 1, column: 0 }, "ports:"),
@@ -148,7 +148,7 @@ var details =
         $(go.Shape, "RoundedRectangle",
           new go.Binding("fill", "color")),
         $(go.Panel, "Table",
-          { defaultAlignment: go.Spot.Right },
+          { defaultAlignment: go.Spot.Left },
           $(go.TextBlock, { row: 0, column: 0, columnSpan: 2, font: "bold 12pt sans-serif" },
             new go.Binding("text", "key")),
           $(go.TextBlock, { row: 1, column: 0 }, "Details:"),
@@ -173,7 +173,7 @@ var details =
 
   var templmap = new go.Map("string", go.Node);
   templmap.add("name", name);
-  templmap.add("basiscs", basics);
+  templmap.add("basics", basics);
   templmap.add("ports", ports);
   templmap.add("details", details);
   diagram.nodeTemplateMap = templmap;
