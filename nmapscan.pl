@@ -418,7 +418,7 @@ foreach my $ipaddress (sort keys %subnets) {
      push(@details,"OC CPE: "     .$host{$ipaddress}{'oc_cpe'}    ) if  (exists $host{$ipaddress}{'oc_cpe'});
      push(@details,"OS Details: " .$host{$ipaddress}{'os_details'}) if  (exists $host{$ipaddress}{'os_details'});
      push(@details,"Warnings: ",join("\\n",@{$fact{$ipaddress}}))   if ((exists $fact{$ipaddress}) && (@{$fact{$ipaddress}}));
-     $name=NAME($ipaddress);
+     my $name=NAME($ipaddress);
      my $color=$host{$ipaddress}{'color'} || "lightyellow";
      $color="lightsalmon" if ((exists $host{$ipaddress}{'oc_cpe'}) && ($host{$ipaddress}{'oc_cpe'} =~ /linux/i));
      $color="green"       if ((exists $host{$ipaddress}{'vendor'}) && ($host{$ipaddress}{'vendor'} =~ /apple/i));
