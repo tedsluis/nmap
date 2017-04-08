@@ -56,36 +56,39 @@ function _traverseDOM(node) {
 
 <h2 id="ChangingCategoryOfPart">Network map</h2>
 <script data-language="javascript" id="changingCategory">
-  function changeCategory(e, obj) {
+  function changeCategory(obj, category) {
     var node = obj.part;
     if (node) {
       var diagram = node.diagram;
       diagram.startTransaction("changeCategory");
-      var cat = diagram.model.getCategoryForNodeData(node.data);
-      if (cat === "simple")
-        cat = "detailed";
-      else
-        cat = "simple";
-      diagram.model.setCategoryForNodeData(node.data, cat);
+      diagram.model.setCategoryForNodeData(node.data, category);
       diagram.commitTransaction("changeCategory");
     }
   }
 
-  var simpletemplate =
+  var name=
     $(go.Node, "Spot",
       $(go.Panel, "Auto",
-        $(go.Shape, "Ellipse",
+        $(go.Shape, "RoundedRectangle",
           new go.Binding("fill", "color")),
         $(go.TextBlock,
           new go.Binding("text", "key"))
       ),
       $("Button",
         { alignment: go.Spot.TopRight },
-        $(go.Shape, "AsteriskLine", { width: 8, height: 8 }),
-        { click: changeCategory })
+        $(go.Shape, "ThinCross", { width: 3, height: 3 }),
+	      { click: function(e, obj) { changeCategory(obj,'basics');} }),
+      $("Button",
+        { alignment: go.Spot.TopLeft },
+        $(go.Shape, "ThinCross", { width: 3, height: 3 }),
+	      { click: function(e, obj) { changeCategory(obj,'ports');} }),
+      $("Button",
+        { alignment: go.Spot.BottomRight },
+        $(go.Shape, "ThinCross", { width: 3, height: 3 }),
+	      { click: function(e, obj) { changeCategory(obj,'details');} })
     );
 
-  var detailtemplate =
+  var basics =
     $(go.Node, "Spot",
       $(go.Panel, "Auto",
         $(go.Shape, "RoundedRectangle",
@@ -94,25 +97,91 @@ function _traverseDOM(node) {
           { defaultAlignment: go.Spot.Left },
           $(go.TextBlock, { row: 0, column: 0, columnSpan: 2, font: "bold 12pt sans-serif" },
             new go.Binding("text", "key")),
-          $(go.TextBlock, { row: 1, column: 0 }, "Description:"),
+          $(go.TextBlock, { row: 1, column: 0 }, "Basics:"),
           $(go.TextBlock, { row: 1, column: 1 }, new go.Binding("text", "desc"))
         )
       ),
       $("Button",
         { alignment: go.Spot.TopRight },
-        $(go.Shape, "AsteriskLine", { width: 8, height: 8 }),
-        { click: changeCategory })
+        $(go.Shape, "CircleLine", { width: 4, height: 4 }),
+	      { click: function(e, obj) { changeCategory(obj,'name');} }),
+     $("Button",
+        { alignment: go.Spot.TopLeft },
+        $(go.Shape, "ThinCross", { width: 4, height: 4 }),
+	      { click: function(e, obj) { changeCategory(obj,'ports');} }),
+     $("Button",
+        { alignment: go.Spot.BottomRight },
+        $(go.Shape, "ThinCross", { width: 4, height: 4 }),
+	      { click: function(e, obj) { changeCategory(obj,'details');} })
     );
 
+  var ports =
+    $(go.Node, "Spot",
+      $(go.Panel, "Auto",
+        $(go.Shape, "RoundedRectangle",
+          new go.Binding("fill", "color")),
+        $(go.Panel, "Table",
+          { defaultAlignment: go.Spot.Right },
+          $(go.TextBlock, { row: 0, column: 0, columnSpan: 2, font: "bold 12pt sans-serif" },
+            new go.Binding("text", "key")),
+          $(go.TextBlock, { row: 1, column: 0 }, "ports:"),
+          $(go.TextBlock, { row: 1, column: 1 }, new go.Binding("text", "desc"))
+        )
+      ),
+      $("Button",
+        { alignment: go.Spot.TopRight },
+        $(go.Shape, "ThinCross", { width: 4, height: 4 }),
+	      { click: function(e, obj) { changeCategory(obj,'basics');} }),
+     $("Button",
+        { alignment: go.Spot.TopLeft },
+        $(go.Shape, "CircleLine", { width: 4, height: 4 }),
+	      { click: function(e, obj) { changeCategory(obj,'name');} }),
+     $("Button",
+        { alignment: go.Spot.BottomRight },
+        $(go.Shape, "ThinCross", { width: 4, height: 4 }),
+	      { click: function(e, obj) { changeCategory(obj,'details');} })
+    );
+
+var details =
+    $(go.Node, "Spot",
+      $(go.Panel, "Auto",
+        $(go.Shape, "RoundedRectangle",
+          new go.Binding("fill", "color")),
+        $(go.Panel, "Table",
+          { defaultAlignment: go.Spot.Right },
+          $(go.TextBlock, { row: 0, column: 0, columnSpan: 2, font: "bold 12pt sans-serif" },
+            new go.Binding("text", "key")),
+          $(go.TextBlock, { row: 1, column: 0 }, "Details:"),
+          $(go.TextBlock, { row: 1, column: 1 }, new go.Binding("text", "desc"))
+        )
+      ),
+      $("Button",
+        { alignment: go.Spot.TopRight },
+        $(go.Shape, "ThinCross", { width: 4, height: 4 }),
+	      { click: function(e, obj) { changeCategory(obj,'basics');} }),
+     $("Button",
+        { alignment: go.Spot.TopLeft },
+        $(go.Shape, "ThinCross", { width: 4, height: 4 }),
+	      { click: function(e, obj) { changeCategory(obj,'ports');} }),
+     $("Button",
+        { alignment: go.Spot.BottomRight },
+        $(go.Shape, "CircleLine", { width: 4, height: 4 }),
+	      { click: function(e, obj) { changeCategory(obj,'name');} })
+    );
+
+
+
   var templmap = new go.Map("string", go.Node);
-  templmap.add("simple", simpletemplate);
-  templmap.add("detailed", detailtemplate);
+  templmap.add("name", name);
+  templmap.add("basiscs", basics);
+  templmap.add("ports", ports);
+  templmap.add("details", details);
   diagram.nodeTemplateMap = templmap;
 
   diagram.layout = $(go.ForceDirectedLayout,{ maxIterations: 200, defaultSpringLength: 30, defaultElectricalCharge: 100 });
 
-diagram.model.nodeDataArray = [{ key: "192.168.1.254", desc: "Route: [rb750 (192.168.11.1)]-->[192.168.1.254 (192.168.1.254)]\nStatus: Up\nLatency: 0.0027s latency\nNot shown: 997 closed ports\nDevice type: broadband router\nRunning: eCosCentric eCos 2.X, Cisco embedded, Motorola embedded, Scientific Atlanta embedded\nOS CPE: cpe:/o:ecoscentric:ecos:2.0 cpe:/h:cisco:epc3925 cpe:/h:cisco:dpc2320 cpe:/h:motorola:sb5101e cpe:/h:scientific_atlanta:epc2203\nOs Details: Cisco EPC3925, DPC2320, Motorola SURFboard SB5101E, or Scientific Atlanta EPC2203 cable modem (eCos 2.0)\nHops: 2", color: "lightyellow", category: "simple" },{ key: "192.168.11.1,rb750", desc: "Route: [rb750 (192.168.11.1)]\nStatus: Up\nLatency: 0.00019s latency\nNot shown: 993 closed ports\nMAC: 6C:3B:6B:C7:01:8E\nVendor: Routerboard.com\nDevice type: general purpose\nRunning: Linux 2.6.X|3.X\nOS CPE: cpe:/o:linux:linux_kernel:2.6 cpe:/o:linux:linux_kernel:3\nOs Details: Linux 2.6.32 - 3.10\nHops: 1", color: "lightblue", category: "simple" },{ key: "192.168.11.38,nasted", desc: "Route: [nasted (192.168.11.38)]\nStatus: Up\nLatency: 0.0019s latency\nNot shown: 986 closed ports\nMAC: 00:08:9B:C6:10:24\nVendor: ICP Electronics\nDevice type: general purpose\nRunning: Linux 2.6.X|3.X\nOS CPE: cpe:/o:linux:linux_kernel:2.6 cpe:/o:linux:linux_kernel:3\nOs Details: Linux 2.6.32 - 3.10\nHops: 1", color: "lightblue", category: "simple" },{ key: "192.168.11.104,p4015n", desc: "Route: [p4015n (192.168.11.104)]\nStatus: Up\nLatency: 0.00020s latency\nNot shown: 992 closed ports\nMAC: 3C:D9:2B:0F:B1:B1\nVendor: Hewlett Packard\nDevice type: printer\nRunning: HP embedded\nOs Details: HP LaserJet 2055dn, 2420, P3005, CP4005, 4250, P4014, or P4015 printer\nHops: 1", color: "lightblue", category: "simple" },{ key: "192.168.11.169,personalcloud", desc: "Route: [personalcloud (192.168.11.169)]\nStatus: Up\nLatency: 0.00021s latency\nNot shown: 995 closed ports\nMAC: 00:10:75:57:40:0B\nVendor: Segate Technology\nDevice type: general purpose\nRunning: Linux 3.X\nOS CPE: cpe:/o:linux:linux_kernel:3.10\nOs Details: Linux 3.10, Linux 3.2 - 3.16\nHops: 1", color: "lightblue", category: "simple" },{ key: "192.168.11.171", desc: "Route: [ted1090-3 (192.168.11.171)]\nStatus: Up\nLatency: 0.00034s latency\nNot shown: 998 closed ports\nMAC: B8:27:EB:F7:69:67\nVendor: Raspberry Pi Foundation\nDevice type: general purpose\nRunning: Linux 3.X|4.X\nOS CPE: cpe:/o:linux:linux_kernel:3 cpe:/o:linux:linux_kernel:4\nOs Details: Linux 3.2 - 4.6\nHops: 1", color: "lightyellow", category: "simple" },{ key: "192.168.11.172", desc: "Route: [ted1090-1 (192.168.11.172)]\nStatus: Up\nLatency: 0.00048s latency\nNot shown: 998 closed ports\nMAC: B8:27:EB:90:86:E0\nVendor: Raspberry Pi Foundation\nDevice type: general purpose\nRunning: Linux 3.X|4.X\nOS CPE: cpe:/o:linux:linux_kernel:3 cpe:/o:linux:linux_kernel:4\nOs Details: Linux 3.2 - 4.6\nHops: 1", color: "lightyellow", category: "simple" },{ key: "192.168.11.174", desc: "Route: [ted1090-5 (192.168.11.174)]\nStatus: Up\nLatency: 0.00026s latency\nNot shown: 998 closed ports\nMAC: B8:27:EB:DE:54:F0\nVendor: Raspberry Pi Foundation\nDevice type: general purpose\nRunning: Linux 3.X|4.X\nOS CPE: cpe:/o:linux:linux_kernel:3 cpe:/o:linux:linux_kernel:4\nOs Details: Linux 3.2 - 4.6\nHops: 1", color: "lightyellow", category: "simple" },{ key: "192.168.11.175", desc: "Route: [ted1090-6 (192.168.11.175)]\nStatus: Up\nLatency: 0.00014s latency\nNot shown: 998 closed ports\nMAC: 2E:DC:54:46:0C:DC\nVendor: Unknown\nDevice type: general purpose\nRunning: Linux 3.X\nOS CPE: cpe:/o:linux:linux_kernel:3\nOs Details: Linux 3.2 - 3.16\nHops: 1", color: "lightyellow", category: "simple" },{ key: "192.168.11.176", desc: "Route: [ted1090-2 (192.168.11.176)]\nStatus: Up\nLatency: 0.00086s latency\nNot shown: 998 closed ports\nMAC: B8:27:EB:7F:16:13\nVendor: Raspberry Pi Foundation\nDevice type: general purpose\nRunning: Linux 3.X|4.X\nOS CPE: cpe:/o:linux:linux_kernel:3 cpe:/o:linux:linux_kernel:4\nOs Details: Linux 3.2 - 4.6\nHops: 1", color: "lightyellow", category: "simple" },{ key: "192.168.11.177", desc: "Route: [ted1090-7 (192.168.11.177)]\nStatus: Up\nLatency: 0.00020s latency\nNot shown: 998 closed ports\nMAC: 26:0F:0A:3D:79:DC\nVendor: Unknown\nDevice type: general purpose\nRunning: Linux 3.X\nOS CPE: cpe:/o:linux:linux_kernel:3\nOs Details: Linux 3.2 - 3.16\nHops: 1", color: "lightyellow", category: "simple" },{ key: "192.168.11.178", desc: "Route: [ted1090-4 (192.168.11.178)]\nStatus: Up\nLatency: 0.00034s latency\nNot shown: 998 closed ports\nMAC: B8:27:EB:79:B3:10\nVendor: Raspberry Pi Foundation\nDevice type: general purpose\nRunning: Linux 3.X|4.X\nOS CPE: cpe:/o:linux:linux_kernel:3 cpe:/o:linux:linux_kernel:4\nOs Details: Linux 3.2 - 4.6\nHops: 1", color: "lightyellow", category: "simple" },{ key: "192.168.11.179", desc: "Route: [192.168.11.179 (192.168.11.179)]\nStatus: Up\nLatency: 0.071s latency\nMAC: C0:EE:FB:E2:96:AA\nVendor: OnePlus Tech (Shenzhen)\nWarning: Too many fingerprints match this host to give specific OS details. \nHops: 1", color: "lightyellow", category: "simple" },{ key: "192.168.11.186", desc: "Route: [192.168.11.186 (192.168.11.186)]\nStatus: Up\nLatency: 0.0056s latency\nMAC: 1C:56:FE:9A:F9:93\nVendor: Motorola Mobility, a Lenovo Company\nWarning: Too many fingerprints match this host to give specific OS details. \nHops: 1", color: "lightyellow", category: "simple" },{ key: "192.168.11.187", desc: "Route: [192.168.11.187 (192.168.11.187)]\nStatus: Up\nLatency: 0.00028s latency\nNot shown: 998 closed ports\nMAC: 00:E0:4C:36:4F:BA\nVendor: Realtek Semiconductor\nDevice type: general purpose\nRunning: Linux 2.6.X|3.X\nOS CPE: cpe:/o:linux:linux_kernel:2.6 cpe:/o:linux:linux_kernel:3\nOs Details: Linux 2.6.32 - 3.10\nHops: 1", color: "lightyellow", category: "simple" },{ key: "192.168.11.189", desc: "Route: \nStatus: Up\nLatency: 0.30s latency\nMAC: E0:98:61:79:33:2E\nVendor: Motorola Mobility, a Lenovo Company\nWarning: Too many fingerprints match this host to give specific OS details. \nHops: 1", color: "lightyellow", category: "simple" },{ key: "192.168.11.200,gs724t", desc: "Route: [gs724t (192.168.11.200)]\nStatus: Up\nLatency: 0.0014s latency\nNot shown: 998 closed ports\nMAC: A0:04:60:26:28:CE\nVendor: Netgear\nDevice type: switch\nRunning: Netgear embedded\nOs Details: Netgear GS700T-series switch\nHops: 1", color: "lightblue", category: "simple" },{ key: "192.168.11.201,wndap660", desc: "Route: [wndap660 (192.168.11.201)]\nStatus: Up\nLatency: 0.00018s latency\nNot shown: 997 closed ports\nMAC: 04:A1:51:52:BF:C8\nVendor: Netgear\nDevice type: general purpose\nRunning: Linux 2.6.X\nOS CPE: cpe:/o:linux:linux_kernel:2.6\nOs Details: Linux 2.6.17 - 2.6.36\nHops: 1", color: "lightblue", category: "simple" },{ key: "192.168.11.80,msi", desc: "Route: [msi (192.168.11.80)]\nStatus: Up\nLatency: 0.000059s latency\nNot shown: 998 closed ports\nDevice type: general purpose\nRunning: Linux 3.X|4.X\nOS CPE: cpe:/o:linux:linux_kernel:3 cpe:/o:linux:linux_kernel:4\nOs Details: Linux 3.8 - 4.6\nHops: 0", color: "lightblue", category: "simple" },{ key: "192.168.122.1", desc: "Route: [msi.bachstraat20 (192.168.122.1)]\nStatus: Up\nLatency: 0.000057s latency\nNot shown: 997 closed ports\nDevice type: general purpose\nRunning: Linux 3.X|4.X\nOS CPE: cpe:/o:linux:linux_kernel:3 cpe:/o:linux:linux_kernel:4\nOs Details: Linux 3.7 - 3.10, Linux 3.8 - 4.6\nHops: 0", color: "lightyellow", category: "simple" }];
-diagram.model.linkDataArray = [{ from: "192.168.11.1,rb750", to: "192.168.1.254" },{ from: "192.168.11.1,rb750", to: "192.168.11.1,rb750" },{ from: "192.168.11.1,rb750", to: "192.168.11.38,nasted" },{ from: "192.168.11.1,rb750", to: "192.168.11.104,p4015n" },{ from: "192.168.11.1,rb750", to: "192.168.11.169,personalcloud" },{ from: "192.168.11.1,rb750", to: "192.168.11.171" },{ from: "192.168.11.1,rb750", to: "192.168.11.172" },{ from: "192.168.11.1,rb750", to: "192.168.11.174" },{ from: "192.168.11.1,rb750", to: "192.168.11.175" },{ from: "192.168.11.1,rb750", to: "192.168.11.176" },{ from: "192.168.11.1,rb750", to: "192.168.11.177" },{ from: "192.168.11.1,rb750", to: "192.168.11.178" },{ from: "192.168.11.1,rb750", to: "192.168.11.179" },{ from: "192.168.11.1,rb750", to: "192.168.11.186" },{ from: "192.168.11.1,rb750", to: "192.168.11.187" },{ from: "192.168.11.1,rb750", to: "192.168.11.189" },{ from: "192.168.11.1,rb750", to: "192.168.11.200,gs724t" },{ from: "192.168.11.1,rb750", to: "192.168.11.201,wndap660" },{ from: "192.168.11.1,rb750", to: "192.168.11.80,msi" },{ from: "192.168.11.1,rb750", to: "192.168.122.1" }];
+diagram.model.nodeDataArray = [{ key:  "192.168.1.10", desc: "Subnet: 192.168.1.0/24\nGateway: \nDevice type: webcam|WAP|media device|printer\nStatus: up\nLatency: 0.019s latency\nHops: 63\nOC CPE: cpe:/h:novatel:mifi_4620l cpe:/h:olympus:stylus_sh-2 cpe:/h:canon:imageclass_mf212w\nWarnings: \n730 closed ports, 266 filtered ports\nLeica T camera (93%), Novatel MiFi 4620L WAP (93%), Olympus Stylus SH-2 camera (93%), Frontier Silicon internet radio (92%), Canon imageCLASS MF212w printer (89%), Novatel MiFi 2200 3G WAP or iDirect Evolution X1 satellite router (85%)\nNo exact OS matches for host (test conditions non-ideal)..", color: "lightyellow", category: "name" },{ key:  "192.168.1.11", desc: "Subnet: 192.168.1.0/24\nGateway: \nDevice type: firewall\nStatus: up\nLatency: 3.0s latency\nOC CPE: cpe:/h:fortinet:fortigate_100d\nWarnings: \n912 filtered ports, 87 closed ports\nFortinet FortiGate 100D firewall (87%)\nNo exact OS matches for host (test conditions non-ideal)..", color: "lightyellow", category: "name" },{ key:  "192.168.1.13", desc: "Subnet: 192.168.1.0/24\nGateway: \nDevice type: WAP\nRunning: Linux 2.6.X\nStatus: up\nLatency: 0.0022s latency\nHops: 2\nOC CPE: cpe:/o:linux:linux_kernel:2.6.22\nOS Details: Tomato 1.28 (Linux 2.6.22).\nWarnings: \n998 closed ports", color: "lightsalmon", category: "name" },{ key:  "192.168.1.21", desc: "Subnet: 192.168.1.0/24\nGateway: \nStatus: up\nLatency: 0.00044s latency\nWarnings: \n999 closed ports\nNo exact OS matches for host (If you know what OS is running on it, see https://nmap.org/submit/ )..", color: "lightyellow", category: "name" },{ key:  "192.168.1.254", desc: "Subnet: 192.168.1.0/24\nGateway: \nDevice type: broadband router\nRunning: eCosCentric eCos 2.X, Cisco embedded, Motorola embedded, Scientific Atlanta embedded\nStatus: up\nLatency: 0.0011s latency\nHops: 2\nOC CPE: cpe:/o:ecoscentric:ecos:2.0 cpe:/h:cisco:epc3925 cpe:/h:cisco:dpc2320 cpe:/h:motorola:sb5101e cpe:/h:scientific_atlanta:epc2203\nOS Details: Cisco EPC3925, DPC2320, Motorola SURFboard SB5101E, or Scientific Atlanta EPC2203 cable modem (eCos 2.0).\nWarnings: \n997 closed ports", color: "lightyellow", category: "name" },{ key:  "192.168.1.31", desc: "Subnet: 192.168.1.0/24\nGateway: \nDevice type: general purpose\nRunning: Linux 2.6.X|3.X\nStatus: up\nLatency: 0.00067s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:2.6 cpe:/o:linux:linux_kernel:3\nOS Details: Linux 2.6.32 - 3.10.\nWarnings: \n993 closed ports", color: "orange", category: "name" },{ key:  "192.168.1.93", desc: "Subnet: 192.168.1.0/24\nGateway: ", color: "lightyellow", category: "name" },{ key:  "192.168.11.1", desc: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nDevice type: general purpose\nRunning: Linux 2.6.X|3.X\nMAC: 6C:3B:6B:C7:01:8E\nVendor: Routerboard.com\nStatus: up\nLatency: 0.00017s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:2.6 cpe:/o:linux:linux_kernel:3\nOS Details: Linux 2.6.32 - 3.10.\nWarnings: \n993 closed ports", color: "lightsalmon", category: "name" },{ key:  "192.168.11.116", desc: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nDevice type: general purpose|printer|VoIP adapter\nRunning: Wind River VxWorks, HP embedded, Vocality embedded\nMAC: F4:CE:46:37:40:8A\nVendor: Hewlett Packard\nStatus: up\nLatency: 0.00021s latency\nHops: 1\nOC CPE: cpe:/o:windriver:vxworks\nOS Details: VxWorks: HP printer or Vocality BASICS Four Wire VoIP gateway.\nWarnings: \n990 closed ports", color: "lightyellow", category: "name" },{ key:  "192.168.11.133", desc: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1", color: "lightyellow", category: "name" },{ key:  "192.168.11.163", desc: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nMAC: 1C:56:FE:9A:F9:93\nVendor: Motorola Mobility, a Lenovo Company\nStatus: up\nLatency: 0.022s latency\nHops: 1\nWarnings: \nToo many fingerprints match this host to give specific OS details.", color: "lightyellow", category: "name" },{ key:  "192.168.11.165", desc: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nMAC: D4:3D:7E:B7:40:8B\nVendor: Micro-Star Int'l\nStatus: up\nLatency: 0.00030s latency\nHops: 1\nWarnings: \nToo many fingerprints match this host to give specific OS details.", color: "lightyellow", category: "name" },{ key:  "192.168.11.169", desc: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nDevice type: general purpose\nRunning: Linux 3.X\nMAC: 00:10:75:57:40:0B\nVendor: Segate Technology\nStatus: up\nLatency: 0.00022s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:3.10\nOS Details: Linux 3.10, Linux 3.2 - 3.16.\nWarnings: \n995 closed ports", color: "lightsalmon", category: "name" },{ key:  "192.168.11.171", desc: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nDevice type: general purpose\nRunning: Linux 3.X|4.X\nMAC: B8:27:EB:F7:69:67\nVendor: Raspberry Pi Foundation\nStatus: up\nLatency: 0.00032s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:3 cpe:/o:linux:linux_kernel:4\nOS Details: Linux 3.2 - 4.6.\nWarnings: \n998 closed ports", color: "lightblue", category: "name" },{ key:  "192.168.11.172", desc: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nDevice type: general purpose\nRunning: Linux 3.X|4.X\nMAC: B8:27:EB:90:86:E0\nVendor: Raspberry Pi Foundation\nStatus: up\nLatency: 0.00069s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:3 cpe:/o:linux:linux_kernel:4\nOS Details: Linux 3.2 - 4.6.\nWarnings: \n998 closed ports", color: "lightblue", category: "name" },{ key:  "192.168.11.174", desc: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nDevice type: general purpose\nRunning: Linux 3.X|4.X\nMAC: B8:27:EB:DE:54:F0\nVendor: Raspberry Pi Foundation\nStatus: up\nLatency: 0.00030s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:3 cpe:/o:linux:linux_kernel:4\nOS Details: Linux 3.2 - 4.6.\nWarnings: \n998 closed ports", color: "lightblue", category: "name" },{ key:  "192.168.11.175", desc: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nDevice type: general purpose\nRunning: Linux 3.X\nMAC: 2E:DC:54:46:0C:DC\nVendor: Unknown\nStatus: up\nLatency: 0.00017s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:3\nOS Details: Linux 3.2 - 3.16.\nWarnings: \n998 closed ports", color: "lightsalmon", category: "name" },{ key:  "192.168.11.176", desc: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nDevice type: general purpose\nRunning: Linux 3.X|4.X\nMAC: B8:27:EB:7F:16:13\nVendor: Raspberry Pi Foundation\nStatus: up\nLatency: 0.00049s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:3 cpe:/o:linux:linux_kernel:4\nOS Details: Linux 3.2 - 4.6.\nWarnings: \n998 closed ports", color: "lightblue", category: "name" },{ key:  "192.168.11.177", desc: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nDevice type: general purpose\nRunning: Linux 3.X\nMAC: 26:0F:0A:3D:79:DC\nVendor: Unknown\nStatus: up\nLatency: 0.00021s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:3\nOS Details: Linux 3.2 - 3.16.\nWarnings: \n998 closed ports", color: "lightsalmon", category: "name" },{ key:  "192.168.11.178", desc: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nDevice type: general purpose\nRunning: Linux 3.X|4.X\nMAC: B8:27:EB:79:B3:10\nVendor: Raspberry Pi Foundation\nStatus: up\nLatency: 0.00032s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:3 cpe:/o:linux:linux_kernel:4\nOS Details: Linux 3.2 - 4.6.\nWarnings: \n998 closed ports", color: "lightblue", category: "name" },{ key:  "192.168.11.180", desc: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nMAC: 3C:A9:F4:4C:41:F8\nVendor: Intel Corporate\nStatus: up\nLatency: 0.10s latency\nHops: 1\nWarnings: \nToo many fingerprints match this host to give specific OS details.", color: "lightgreen", category: "name" },{ key:  "192.168.11.184", desc: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nMAC: A4:D1:D2:7B:64:B2\nVendor: Apple\nStatus: up\nLatency: 0.0029s latency\nHops: 1\nOS Details: Apple Mac OS X 10.7.0 (Lion) - 10.11 (El Capitan) or iOS 4.1 - 9.3.3 (Darwin 10.0.0 - 15.6.0).\nWarnings: \n951 closed ports, 48 filtered ports", color: "green", category: "name" },{ key:  "192.168.11.187", desc: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nDevice type: general purpose\nRunning: Linux 2.6.X|3.X\nMAC: 00:E0:4C:36:4F:BA\nVendor: Realtek Semiconductor\nStatus: up\nLatency: 0.00027s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:2.6 cpe:/o:linux:linux_kernel:3\nOS Details: Linux 2.6.32 - 3.10.\nWarnings: \n998 closed ports", color: "lightsalmon", category: "name" },{ key:  "192.168.11.200", desc: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nDevice type: switch\nRunning: Netgear embedded\nMAC: A0:04:60:26:28:CE\nVendor: Netgear\nStatus: up\nLatency: 0.0015s latency\nHops: 1\nOS Details: Netgear GS700T-series switch.\nWarnings: \n998 closed ports", color: "lightyellow", category: "name" },{ key:  "192.168.11.201", desc: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nDevice type: general purpose\nRunning: Linux 2.6.X\nMAC: 04:A1:51:52:BF:C8\nVendor: Netgear\nStatus: up\nLatency: 0.00018s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:2.6\nOS Details: Linux 2.6.17 - 2.6.36.\nWarnings: \n997 closed ports", color: "lightsalmon", category: "name" },{ key:  "192.168.11.38", desc: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nDevice type: general purpose\nRunning: Linux 2.6.X|3.X\nMAC: 00:08:9B:C6:10:24\nVendor: ICP Electronics\nStatus: up\nLatency: 0.00015s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:2.6 cpe:/o:linux:linux_kernel:3\nOS Details: Linux 2.6.32 - 3.10.\nWarnings: \n986 closed ports", color: "lightsalmon", category: "name" },{ key:  "192.168.11.80", desc: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nDevice type: general purpose\nRunning: Linux 3.X|4.X\nStatus: up\nLatency: 0.000054s latency\nHops: 0\nOC CPE: cpe:/o:linux:linux_kernel:3 cpe:/o:linux:linux_kernel:4\nOS Details: Linux 3.7 - 3.10, Linux 3.8 - 4.6.\nWarnings: \n998 closed ports", color: "lightsalmon", category: "name" },{ key:  "192.168.122.1", desc: "Subnet: 192.168.122.0/24\nGateway: \nDevice type: general purpose\nRunning: Linux 3.X|4.X\nStatus: up\nLatency: 0.000060s latency\nHops: 0\nOC CPE: cpe:/o:linux:linux_kernel:3 cpe:/o:linux:linux_kernel:4\nOS Details: Linux 3.11 - 3.14, Linux 3.7 - 3.10, Linux 3.8 - 4.6.\nWarnings: \n997 closed ports", color: "lightsalmon", category: "name" },{ key:  "82.217.122.68,52D97A44.cm-11-1b.dynamic.ziggo.nl", desc: "Subnet: 82.217.122.68/31\nGateway: \nStatus: up\nLatency: 0.0028s latency\nWarnings: \n999 filtered ports\nToo many fingerprints match this host to give specific OS details.", color: "lightyellow", category: "name" }];
+diagram.model.linkDataArray = [{ from: "192.168.1.10", to: "192.168.1.10" },{ from: "192.168.1.11", to: "192.168.1.11" },{ from: "192.168.1.13", to: "192.168.1.13" },{ from: "192.168.1.21", to: "192.168.1.21" },{ from: "192.168.1.254", to: "192.168.1.254" },{ from: "192.168.1.31", to: "192.168.1.31" },{ from: "192.168.1.93", to: "192.168.1.93" },{ from: "192.168.11.1", to: "192.168.11.1" },{ from: "192.168.11.116", to: "192.168.11.1" },{ from: "192.168.11.133", to: "192.168.11.1" },{ from: "192.168.11.163", to: "192.168.11.1" },{ from: "192.168.11.165", to: "192.168.11.1" },{ from: "192.168.11.169", to: "192.168.11.1" },{ from: "192.168.11.171", to: "192.168.11.1" },{ from: "192.168.11.172", to: "192.168.11.1" },{ from: "192.168.11.174", to: "192.168.11.1" },{ from: "192.168.11.175", to: "192.168.11.1" },{ from: "192.168.11.176", to: "192.168.11.1" },{ from: "192.168.11.177", to: "192.168.11.1" },{ from: "192.168.11.178", to: "192.168.11.1" },{ from: "192.168.11.180", to: "192.168.11.1" },{ from: "192.168.11.184", to: "192.168.11.1" },{ from: "192.168.11.187", to: "192.168.11.1" },{ from: "192.168.11.200", to: "192.168.11.1" },{ from: "192.168.11.201", to: "192.168.11.1" },{ from: "192.168.11.38", to: "192.168.11.1" },{ from: "192.168.11.80", to: "192.168.11.1" },{ from: "192.168.122.1", to: "192.168.122.1" },{ from: "82.217.122.68,52D97A44.cm-11-1b.dynamic.ziggo.nl", to: "82.217.122.68,52D97A44.cm-11-1b.dynamic.ziggo.nl" },{ from: "192.168.1.31", to: "192.168.11.1" }];
 </script>
 <script>goCode("changingCategory", 1900, 1080)</script>
 
