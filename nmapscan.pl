@@ -106,8 +106,8 @@ my %trace;
 my %reverse;
 my %interface;
 my %interfacesubnet;
-my %subnets;  # subnets{ip} => subnet
-my %gateway;  # gateway{subnet} => ip gateway
+my %subnets;          # subnets{ip} => subnet
+my %gateway;          # gateway{subnet} => ip gateway
 my %cidr;
 my %subnet2ip;
 my %ip2subnet;
@@ -240,14 +240,12 @@ sub TraceRoute(@) {
 }
 
 #
-# Scan subnets
+# Scan subnets 
 foreach my $subnet (@subnets) {
      print "~~~~~~~~~~~~~~~~~ Start scanning SUBNET=$subnet ~~~~~~~~~~~~~~~~~\n" if ($debug);
      my @data=`nmap -O -n $subnet`;
-     my $info="";
-     my $color="lightyellow";
-     my $category="simple";
      my $ipaddress="unknown";
+     # Parse scan output
      foreach my $line (@data) {
           chomp($line);
           if (($ipaddress =~ /^unknown$/) && ($line =~ /^\s*$/)) {
@@ -256,9 +254,6 @@ foreach my $subnet (@subnets) {
                # Reached end of host info: start processing host info.
                print "IP ADDRESS=$ipaddress\n" if ($debug);
                # clear variables for next hosts.
-               $info="";
-               $color="lightyellow";
-               $category="simple";
                $ipaddress="unknown";
                next;
           } elsif ($line =~ /Nmap\sscan\sreport\sfor\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s*/) {
@@ -277,7 +272,6 @@ foreach my $subnet (@subnets) {
                     if ($line =~ /in-addr\.arpa\s+name\s=\s(.+)\.$/){
                          $host{$ipaddress}{'hostname'}=uc($1);
                          $host{$ipaddress}{'color'}='lightcyan' if (! exists $host{$ipaddress}{'color'});
-                         $color="lightcyan";
                          print "HOSTNAME=".uc($1)."\n" if ($debug);
                     }
                }
@@ -344,7 +338,6 @@ foreach my $subnet (@subnets) {
           } else {
                print "NOT PARSED! >>>$line<<<\n" if ($debug);
           }
-          $info.="$line\n";
      }
 }
 
@@ -376,6 +369,8 @@ foreach my $ipaddress (sort keys %subnets) {
      print "  IP=$ipaddress  ".join("-->",TraceRoute($ipaddress,$subnet))."\n\n" if ($debug);
 }
 
+#
+# Add hostname to IP
 sub NAME(@) {
      my $ipaddress=shift;
      my $name=$ipaddress;
@@ -383,6 +378,8 @@ sub NAME(@) {
      return $name;
 }
 
+#
+# Compose subnet and host data
 my @nodes;
 my @links;
 foreach my $ipaddress (sort keys %subnets) {
@@ -415,28 +412,24 @@ foreach my $ipaddress (sort keys %subnets) {
      push(@nodes,"{ key:  \"${name}\", basics: \"".join("\\n",@basics)."\", details: \"".join("\\n",@details)."\",ports: \"".join("\\n",@ports)."\", color: \"$color\", category: \"name\" }");
      if (exists $gateway{$subnets{$ipaddress}}) {
           push(@links,"{ from: \"${name}\", to: \"".NAME($gateway{$subnets{$ipaddress}})."\" }");
-     #} else {
-          #push(@links,"{ from: \"${name}\", to: \"${name}\" }");
      }
 }
 
 #
-# Add Internet 
+# Add Internet node + link
 if ($internetgateway) {
      push(@nodes,"{ key:  \"Internet Gateway\", basics: \"Hops:".join("\\n",@internetroute)."\", details: \"".join("--->",@internetroute)."\",ports: \"*any*\", color: \"yellow\", category: \"name\" }");
      push(@links,"{ from: \"".NAME($internetgateway)."\", to: \"Internet Gateway\" }");
 }
 
 #
-# Add routes
+# Add link for each routes
 foreach my $route (keys %route) {
      next if (! exists $subnets{$route});
      my $gateway=$route{$route};
      next if (! exists $subnets{$gateway});
      if ($gateway =~ /\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/) {
           push(@links,"{ from: \"".NAME($gateway)."\", to: \"".NAME($route)."\" }");
-     #} else {
-          #push(@links,"{ from: \"".NAME($route)."\", to: \"".NAME($route)."\" }");
      }
 }
 
