@@ -181,10 +181,10 @@ sub TraceRoute(@) {
                          if (exists $subnets{$gw}) {
                               $gateway{$subnets{$gw}} = $gw;
                               if ($ipaddress =~ /^8\.8\.8\.8$/) {
-                                   print "      INTERNET GATEWAY FOUND: $gw in $subnets{$gw} (HOP=$hop)\n";
+                                   print "      INTERNET GATEWAY FOUND: $gw in $subnets{$gw} (HOP=$hop)\n" if ($debug);
                                    $internetgateway=$gw;
                               } else {
-                                   print "      GATEWAY FOUND: $gw in $subnets{$gw} (HOP=$hop)\n";
+                                   print "      GATEWAY FOUND: $gw in $subnets{$gw} (HOP=$hop)\n" if ($debug);
                               }
                          }
                     } 
@@ -197,34 +197,31 @@ sub TraceRoute(@) {
                     print "    IPADDRESS=$ipaddress ---> HOP=$name $ip ($hop)  [via: interface=$hostips{$hostip} ($hostip)]\n" if ($debug);
                     # Store gateway subnet.
                     if ($hop > 1) {
-			    #print "Debug: ipaddres=$ipaddress,hop=$hop,name=$name,ip=$ip,rest=$rest\n";
-			    #print "hop (".($hop).")=$trace{$ipaddress}{($hop)}\n" if ((exists $trace{$ipaddress}) && (exists $trace{$ipaddress}{($hop)}));
-			    #print "hop-1 (".($hop-1).")=$trace{$ipaddress}{($hop-1)}\n" if ((exists $trace{$ipaddress}) && (exists $trace{$ipaddress}{($hop-1)}));
                          if (($rest =~ /\s!H\s/) && (exists $trace{$ipaddress}) && (exists $trace{$ipaddress}{$hop-1})){
                               $route{$ip}=$trace{$ipaddress}{$hop-1};
-                              print "      ROUTE FOUND: $ip in subnet $subnets{$ip} to gateway $trace{$ipaddress}{$hop-1} in subnet $subnets{$trace{$ipaddress}{$hop-1}} (HOP=$hop)\n";
+                              print "      ROUTE FOUND: $ip in subnet $subnets{$ip} to gateway $trace{$ipaddress}{$hop-1} in subnet $subnets{$trace{$ipaddress}{$hop-1}} (HOP=$hop)\n" if ($debug);
                          }
                          if ((exists $trace{$ipaddress}{($hop-1)}) && ($trace{$ipaddress}{($hop-1)} =~ /(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/)) {
                               my $gw=$trace{$ipaddress}{($hop-1)};
                               if (exists $subnets{$gw}) {
                                    $gateway{$subnets{$gw}} = $gw;
-                                   print "      GATEWAY FOUND: $gw in $subnets{$gw} (HOP=$hop)\n";
+                                   print "      GATEWAY FOUND: $gw in $subnets{$gw} (HOP=$hop)\n" if ($debug);
                               } else { 
-                                   print "      NO GATEWAY FOUND: (hop=$hop), ip $gw not jet scanned.\n";
+                                   print "      NO GATEWAY FOUND: (hop=$hop), ip $gw not jet scanned.\n" if ($debug);
                               }
                          } else {
-                              print "      NO GATEWAY FOUND: (HOP=$hop)\n";
+                              print "      NO GATEWAY FOUND: (HOP=$hop)\n" if ($debug);
                          }
                     } else {
                          if ((exists $subnets{$ip}) && (exists $subnets{$hostip}) && ($subnets{$ip} !~ /^$subnets{$hostip}$/) && (exists $gateway{$subnets{$hostip}})) {
                               $route{$ip}=$gateway{$subnets{$hostip}};
-                              print "      ROUTE FOUND: $ip in subnet $subnets{$ip} to $gateway{$hostip} in subnet $subnets{$hostip} (HOP=1) \n";
+                              print "      ROUTE FOUND: $ip in subnet $subnets{$ip} to $gateway{$hostip} in subnet $subnets{$hostip} (HOP=1) \n" if ($debug);
                          }
                          if ($subnets{$hostgateway} =~ /^$subnet$/) {
                               $gateway{$subnet}=$hostgateway;
-                              print "      GATEWAY FOUND: $hostgateway in subnet $subnets{$hostgateway} (HOP=1) (host gateway)\n";
+                              print "      GATEWAY FOUND: $hostgateway in subnet $subnets{$hostgateway} (HOP=1) (host gateway)\n" if ($debug);
                          } else {
-                              print "      NO GATEWAY FOUND (HOP=1)\n";
+                              print "      NO GATEWAY FOUND (HOP=1)\n" if ($debug);
                          }
                     }
 		    # Gateway Host IP's other subnets
@@ -345,7 +342,7 @@ foreach my $subnet (@subnets) {
                push(@{$port{$ipaddress}},"$1.");
                print "PORT=$1\n" if ($debug);
           } else {
-               print "NOT PARSED! >>>$line<<<\n";
+               print "NOT PARSED! >>>$line<<<\n" if ($debug);
           }
           $info.="$line\n";
      }
@@ -353,30 +350,30 @@ foreach my $subnet (@subnets) {
 
 #
 # Trace a non scanned IP in every subnets
-print "--------------- TRACEROUTE a non scanned IP in every subnet -------------------------------\n";
+print "--------------- TRACEROUTE a non scanned IP in every subnet -------------------------------\n" if ($debug);
 foreach my $subnet (sort keys %cidr) {
      foreach my $ip (keys %{$subnet2ip{$subnet}}) {
           next if (($ip =~ /^$cidr{$subnet}{'network'}$/) || ($ip =~ /^$cidr{$subnet}{'broadcast'}$/)); 
           next if ((exists $subnets{$ip}) || (exists $cidr{$subnet}{'scanned_non_existing_ip'}));
           $subnets{$ip}=$subnet;
           $cidr{$subnet}{'scanned_non_existing_ip'}="yes";
-          print "--------------------->>> START=$cidr{$subnet}{'network'}, END=$cidr{$subnet}{'broadcast'}, IP=$ip\n";
-          print "  ".join("-->",TraceRoute($ip,$subnet))."\n"; 
+          print "--------------------->>> START=$cidr{$subnet}{'network'}, END=$cidr{$subnet}{'broadcast'}, IP=$ip\n" if ($debug);
+          print "  ".join("-->",TraceRoute($ip,$subnet))."\n" if ($debug); 
      }
 }
 
 #
 # Scan internet gateway
-print "--------------- SCAN INTERNET GATEWAY -------------------------------\n";
+print "--------------- SCAN INTERNET GATEWAY -------------------------------\n" if ($debug);
 my @internetroute=TraceRoute("8.8.8.8","8.8.8.8/31");
 print "INTERNET GATEWAY  ".join("-->",@internetroute)."\n" if ($debug);
 
 #
 # get default gateways & routes
-print "--------------- RESCAN GATEWAYS & ROUTES -------------------------------\n";
+print "--------------- RESCAN GATEWAYS & ROUTES -------------------------------\n" if ($debug);
 foreach my $ipaddress (sort keys %subnets) {
      my $subnet=$subnets{$ipaddress};
-     print "  IP=$ipaddress  ".join("-->",TraceRoute($ipaddress,$subnet))."\n\n";
+     print "  IP=$ipaddress  ".join("-->",TraceRoute($ipaddress,$subnet))."\n\n" if ($debug);
 }
 
 sub NAME(@) {
@@ -425,7 +422,6 @@ foreach my $ipaddress (sort keys %subnets) {
 
 #
 # Add Internet 
-print "TEST:".($internetgateway||"niets")."\n";
 if ($internetgateway) {
      push(@nodes,"{ key:  \"Internet Gateway\", basics: \"Hops:".join("\\n",@internetroute)."\", details: \"".join("--->",@internetroute)."\",ports: \"*any*\", color: \"yellow\", category: \"name\" }");
      push(@links,"{ from: \"".NAME($internetgateway)."\", to: \"Internet Gateway\" }");
