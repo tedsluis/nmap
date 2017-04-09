@@ -168,7 +168,9 @@ Ones it is finshed you can view 'map.html' is a web browser.
   
 ## Video  
   
-<iframe width="560" height="315" src="https://www.youtube.com/embed/DMpabcP0r_U" frameborder="0" allowfullscreen></iframe> 
+Watch a video at youtube: https://youtu.be/DMpabcP0r_U   
+[![Alt text](https://img.youtube.com/vi/DMpabcP0r_U/0.jpg)](https://www.youtube.com/watch?v=DMpabcP0r_U)   
+  
   
 ted.sluis@gmail.com
 
