@@ -166,6 +166,9 @@ Host gateway=192.168.11.1
 Depeding on your system and network this will take quite a while!    
 Ones it is finshed you can view 'map.html' is a web browser.  
   
+## Video  
+  
+<iframe width="560" height="315" src="https://www.youtube.com/embed/DMpabcP0r_U" frameborder="0" allowfullscreen></iframe> 
   
 ted.sluis@gmail.com
 
