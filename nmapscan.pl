@@ -98,22 +98,20 @@ print "Host gateway=$hostgateway\n";
 
 #
 # Initialize variables
-my @node;
-my @link;
 my %fact;
+my %port;
 my %host;
 my %route;
 my %trace;
 my %reverse;
 my %interface;
 my %interfacesubnet;
-my %hosts;    # hosts{ip} => ip+name
-my %ips;      # ips{subnet}{ip} => ip+name
 my %subnets;  # subnets{ip} => subnet
 my %gateway;  # gateway{subnet} => ip gateway
 my %cidr;
 my %subnet2ip;
 my %ip2subnet;
+my $internetgateway;
 my @subnets;
 
 #
@@ -174,17 +172,20 @@ sub TraceRoute(@) {
           print "traceroute -i $hostips{$hostip} $ipaddress " if ($debug);
           foreach my $line (@traceroute) {
                chomp($line);
-               print "\n" if ($debug);
                # Parse route    
                if ($line =~ /^\s*(\d+)\s+\*\s+\*\s+\*/) {
                     my $hop=$1;
-                    print "." if ($debug);
                     $interface{$hostip}{$subnet}="UNREACHABLE" if (! exists $interface{$hostip}{$subnet});
                     if (($hop>1) && (exists $trace{$ipaddress}{($hop-1)}) && ($trace{$ipaddress}{($hop-1)} =~ /(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/)) {
                          my $gw=$trace{$ipaddress}{($hop-1)};
                          if (exists $subnets{$gw}) {
                               $gateway{$subnets{$gw}} = $gw;
-                              print "      GATEWAY FOUND: $gw in $subnets{$gw} (HOP=$hop)\n";
+                              if ($ipaddress =~ /^8\.8\.8\.8$/) {
+                                   print "      INTERNET GATEWAY FOUND: $gw in $subnets{$gw} (HOP=$hop)\n";
+                                   $internetgateway=$gw;
+                              } else {
+                                   print "      GATEWAY FOUND: $gw in $subnets{$gw} (HOP=$hop)\n";
+                              }
                          }
                     } 
                } elsif ($line =~ /^\s*(\d+)\s+([a-z0-9\.\-]+)\s+\((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\)\s(.+)$/i) {
@@ -226,6 +227,12 @@ sub TraceRoute(@) {
                               print "      NO GATEWAY FOUND (HOP=1)\n";
                          }
                     }
+		    # Gateway Host IP's other subnets
+		    if ((exists $hostips{$ipaddress}) && (!exists $gateway{$subnets{$ipaddress}}) && (exists $subnets{$hostgateway})){
+                         foreach my $ip (keys %hostips) {
+		              $gateway{$subnets{$ipaddress}}=$ip if ($subnets{$ip} =~ /^$subnets{$hostgateway}$/);
+                         }
+                    }
                     # subnet is reachable using hostip
                     $interface{$hostip}{$subnet}=$hostips{$hostip};
                     $interfacesubnet{$subnet}=$hostip;
@@ -241,8 +248,6 @@ foreach my $subnet (@subnets) {
      print "~~~~~~~~~~~~~~~~~ Start scanning SUBNET=$subnet ~~~~~~~~~~~~~~~~~\n" if ($debug);
      my @data=`nmap -O -n $subnet`;
      my $info="";
-     my @key;
-     my @desc;
      my $color="lightyellow";
      my $category="simple";
      my $ipaddress="unknown";
@@ -253,14 +258,8 @@ foreach my $subnet (@subnets) {
           } elsif ($line =~ /^\s*$/) {
                # Reached end of host info: start processing host info.
                print "IP ADDRESS=$ipaddress\n" if ($debug);
-               $hosts{$ipaddress}=join(",",@key);
-               $ips{$subnet}{$ipaddress}=join(",",@key); 
-               push(@node,"{ key: \"".join(",",@key)."\", desc: \"".join("\\n",@desc)."\", color: \"$color\", category: \"$category\" }");
-               push(@link,"{ from: \"DEFAULTGATEWAY$subnet\", to: \"".join(",",@key)."\" }");
                # clear variables for next hosts.
                $info="";
-               @key=();
-               @desc=();
                $color="lightyellow";
                $category="simple";
                $ipaddress="unknown";
@@ -272,7 +271,6 @@ foreach my $subnet (@subnets) {
                $host{$ipaddress}{'color'}='lightyellow';
                $subnets{$ipaddress}=$subnet;
                print "++++++++++++++ SCAN HOST IP =$ipaddress, subnet=$subnet +++++++++++++++++\n" if ($debug);
-               push(@key,$1);
                #
                # get hostname
                my @hostname=`nslookup $ipaddress`;
@@ -280,86 +278,74 @@ foreach my $subnet (@subnets) {
                     chomp($line);
                     # Parse hostname   
                     if ($line =~ /in-addr\.arpa\s+name\s=\s(.+)\.$/){
-                         $host{$ipaddress}{'hostname'}=$1;
-                         push(@key,$1);
+                         $host{$ipaddress}{'hostname'}=uc($1);
                          $host{$ipaddress}{'color'}='lightcyan' if (! exists $host{$ipaddress}{'color'});
                          $color="lightcyan";
-                         print "HOSTNAME=$1\n" if ($debug);
+                         print "HOSTNAME=".uc($1)."\n" if ($debug);
                     }
                }
                my $route=join("-->",TraceRoute($ipaddress,$subnet));
                print "\nROUTE=$route\n" if ($debug);    
-               push(@desc,"Route: $route");
                next;
-          } elsif ($line =~ /MAC\sAddress:\s([0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2})\s+\((.+)\)$/i) {
+          } elsif ($line =~ /MAC\sAddress:\s+([0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2})\s+\((.+)\)$/i) {
                $host{$ipaddress}{'mac'}=$1;
-               push(@desc,"MAC: $1");
                $host{$ipaddress}{'vendor'}=$2;
-               push(@desc,"Vendor: $2");
                print "MAC ADDRESS=$1 $2\n" if ($debug);
                next;
           } elsif ($line =~ /Host\sis\sup\s\((\d+\.\d+s\slatency)\)/) {
                $host{$ipaddress}{'status'}='up';
-               push(@desc,"Status: Up");
                $host{$ipaddress}{'latency'}=$1;
-               push(@desc,"Latency: $1");
                print "LATENCY=$1\n" if ($debug);
                next;
           } elsif ($line =~ /Network\sDistance:\s(\d+)\shop/) {
                $host{$ipaddress}{'hops'}=$1;
-               push(@desc,"Hops: $1");
                print "HOPS=$1\n" if ($debug);
                next;
           } elsif ($line =~ /Device type:\s(.+)$/) {
                $host{$ipaddress}{'devicetype'}=$1;
-               push(@desc,"Device type: $1");
                print "DEVICE TYPE=$1\n" if ($debug);
                next;
           } elsif ($line =~ /Running:\s(.+)$/) {
                $host{$ipaddress}{'running'}=$1;
-               push(@desc,"Running: $1");
                print "RUNNING=$1\n" if ($debug);
                next;
           } elsif ($line =~ /Not\sshown:\s(.+)$/) {
-               push(@{$fact{$ipaddress}},"$1");
-               push(@desc,"Not shown: $1");
+               push(@{$port{$ipaddress}},"$1");
                print "NOT SHOWN=$1\n" if ($debug);       
                next;
           } elsif ($line =~ /OS\sCPE:\s(.+)$/) {
                $host{$ipaddress}{'oc_cpe'}="$1";
-               push(@desc,"OS CPE: $1");
                print "OS CPE=$1\n" if ($debug);
                next;
           } elsif ($line =~ /OS\sdetails:\s(.+)$/) {
                $host{$ipaddress}{'os_details'}="$1.";
-               push(@desc,"Os Details: $1");
                print "OS DETAILS=$1\n" if ($debug);
                next;
           } elsif ($line =~ /Warning:\s(.+)$/) {
                push(@{$fact{$ipaddress}},"$1.");
-               push(@desc,"Warning: $1.");
                print "WARNING=$1\n" if ($debug);
                next;
           } elsif ($line =~ /(All\s1000\sscanned\sports)\son\s(.+ )(\sare\sclosed)/) {
-               push(@{$fact{$ipaddress}},"$1.$3");
-               push(@desc,"Not shown: $1.$3");
+               push(@{$port{$ipaddress}},"$1.$3");
                print "NOT SHOWN=$1.$3\n" if ($debug);
                next;
           } elsif ($line =~ /Aggressive OS guesses:\s(.+)$/) {
                push(@{$fact{$ipaddress}},"$1");
-               push(@desc,"Aggressive OS guesses: $1");
                print "AGGRESSIVE OS GUESSES=$1\n" if ($debug);
                next;
           } elsif ($line =~ /(Too\smany\sfingerprints.+)$/) {
                push(@{$fact{$ipaddress}},"$1.");
-               push(@desc,"Warning: $1. ");
                print "TOO MANY FINGERPRINTS=$1.\n" if ($debug);
                next;
           } elsif ($line =~ /(No\sexact\sOS\smatches.+)$/) {
                push(@{$fact{$ipaddress}},"$1.");
-               push(@desc,"Warning: $1.");
                print "NO EXACT OS MATCHES=$1\n" if ($debug);
                next;
+          } elsif ($line =~ /^(\d+.+\s+.+\s+.+)$/i) {
+               push(@{$port{$ipaddress}},"$1.");
+               print "PORT=$1\n" if ($debug);
+          } else {
+               print "NOT PARSED! >>>$line<<<\n";
           }
           $info.="$line\n";
      }
@@ -382,7 +368,8 @@ foreach my $subnet (sort keys %cidr) {
 #
 # Scan internet gateway
 print "--------------- SCAN INTERNET GATEWAY -------------------------------\n";
-print "INTERNET GATEWAY  ".join("-->",TraceRoute("8.8.8.8","8.8.8.8/31"))."\n";
+my @internetroute=TraceRoute("8.8.8.8","8.8.8.8/31");
+print "INTERNET GATEWAY  ".join("-->",@internetroute)."\n" if ($debug);
 
 #
 # get default gateways & routes
@@ -407,7 +394,8 @@ foreach my $ipaddress (sort keys %subnets) {
      my @ports;
      my $subnet=$subnets{$ipaddress};
      push(@basics, "Subnet: "     .$subnet);
-     push(@basics, "Gateway: "    .$gateway{$subnets{$ipaddress}});
+     push(@basics, "Gateway: "    .$gateway{$subnets{$ipaddress}} );
+     push(@basics, "Netmask: "    .$cidr{$subnet}{'subnetmask'}   ) if  (exists $cidr{$subnet});
      push(@basics, "Device type: ".$host{$ipaddress}{'devicetype'}) if  (exists $host{$ipaddress}{'devicetype'});
      push(@basics, "Running: "    .$host{$ipaddress}{'running'}   ) if  (exists $host{$ipaddress}{'running'});
      push(@basics, "MAC: "        .$host{$ipaddress}{'mac'}       ) if  (exists $host{$ipaddress}{'mac'});
@@ -418,7 +406,7 @@ foreach my $ipaddress (sort keys %subnets) {
      push(@details,"OC CPE: "     .$host{$ipaddress}{'oc_cpe'}    ) if  (exists $host{$ipaddress}{'oc_cpe'});
      push(@details,"OS Details: " .$host{$ipaddress}{'os_details'}) if  (exists $host{$ipaddress}{'os_details'});
      push(@details,"Warnings: ",join("\\n",@{$fact{$ipaddress}}))   if ((exists $fact{$ipaddress}) && (@{$fact{$ipaddress}}));
-     my $name=NAME($ipaddress);
+     push(@ports,               join("\\n",@{$port{$ipaddress}}))   if ((exists $port{$ipaddress}) && (@{$port{$ipaddress}}));
      my $color=$host{$ipaddress}{'color'} || "lightyellow";
      $color="lightsalmon" if ((exists $host{$ipaddress}{'oc_cpe'}) && ($host{$ipaddress}{'oc_cpe'} =~ /linux/i));
      $color="green"       if ((exists $host{$ipaddress}{'vendor'}) && ($host{$ipaddress}{'vendor'} =~ /apple/i));
@@ -426,12 +414,21 @@ foreach my $ipaddress (sort keys %subnets) {
      $color="lightgreen"  if ((exists $host{$ipaddress}{'vendor'}) && ($host{$ipaddress}{'vendor'} =~ /intel/i));
      $color="orange"      if  (exists $route{$ipaddress});
      $color="yellow"      if  (exists $gateway{$ipaddress});
+     my $name=NAME($ipaddress);
      push(@nodes,"{ key:  \"${name}\", basics: \"".join("\\n",@basics)."\", details: \"".join("\\n",@details)."\",ports: \"".join("\\n",@ports)."\", color: \"$color\", category: \"name\" }");
      if (exists $gateway{$subnets{$ipaddress}}) {
           push(@links,"{ from: \"${name}\", to: \"".NAME($gateway{$subnets{$ipaddress}})."\" }");
-     } else {
-          push(@links,"{ from: \"${name}\", to: \"${name}\" }");
+     #} else {
+          #push(@links,"{ from: \"${name}\", to: \"${name}\" }");
      }
+}
+
+#
+# Add Internet 
+print "TEST:".($internetgateway||"niets")."\n";
+if ($internetgateway) {
+     push(@nodes,"{ key:  \"Internet Gateway\", basics: \"Hops:".join("\\n",@internetroute)."\", details: \"".join("--->",@internetroute)."\",ports: \"*any*\", color: \"yellow\", category: \"name\" }");
+     push(@links,"{ from: \"".NAME($internetgateway)."\", to: \"Internet Gateway\" }");
 }
 
 #
@@ -442,8 +439,8 @@ foreach my $route (keys %route) {
      next if (! exists $subnets{$gateway});
      if ($gateway =~ /\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/) {
           push(@links,"{ from: \"".NAME($gateway)."\", to: \"".NAME($route)."\" }");
-     } else {
-          push(@links,"{ from: \"".NAME($route)."\", to: \"".NAME($route)."\" }");
+     #} else {
+          #push(@links,"{ from: \"".NAME($route)."\", to: \"".NAME($route)."\" }");
      }
 }
 
