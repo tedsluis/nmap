@@ -439,7 +439,7 @@ foreach my $route (keys %route) {
 my $node= "diagram.model.nodeDataArray = [".join(",",@nodes)."];";
 my $link= "diagram.model.linkDataArray = [".join(",",@links)."];";
 
-open my $in,  '<', "map.html.org" or die "Can't read map.html.org file: $!";
+open my $in,  '<', "default-map.html" or die "Can't read default-map.html file: $!";
 open my $out, '>', "map.html"     or die "Can't write map.html file: $!";
 
 while( <$in> )
