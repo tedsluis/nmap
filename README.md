@@ -11,14 +11,13 @@ Table of Contents
       * [Display host properties](#display-host-properties)  
       * [Prerequisites](#prerequisites)  
       * [Installation instructions](#installation-instructions)
-         * [Install Nmap](#install-nmap)
-         * [Install Traceroute](#install-traceroute)
-         * [Install Perl](#install-perl)
-         * [Install Git](#install-git)
+         * [Install packages](#install-packages)
+         * [Test packages](#test-packages)
          * [Clone repo](#clone-repo)
+      * [Run nmapscan.pl](#run-nmapscanpl)
   
 ## Features
-
+  
 * Performs OS detection and port scanning.
 * Tracks subnet(s) gateways and route to internet.
 * Shows network diagram of subnets with hosts.
@@ -29,7 +28,10 @@ Table of Contents
 ## Network diagram
 [![nmap scan](https://raw.githubusercontent.com/tedsluis/nmap/master/img/nmapscan.jpg)](https://raw.githubusercontent.com/tedsluis/nmap/master/img/nmapscan.jpg)
  
-## Help
+## Help  
+  
+'nmapscan.pl' is a commandline script written in Perl. It creates 'map.html' which contains html, javascript and the network topology data.  
+  
 ````
 ./nmapscan.pl -help
 Help
@@ -87,16 +89,16 @@ Notes:
 ````
 ## Display host properties  
   
-Click on the icons in the corners of the hosts to display the host properties. There are 3 different types: Basic, detailed and port properties.  
+Click on the icons in the corners of the hosts object to display the host properties. There are 3 different types: Basic, detailed and port properties.  
    
 Top right corner: Basisc host info.  
-[![nmap scan](https://raw.githubusercontent.com/tedsluis/nmap/master/img/basics_screenshot.jpg)](https://raw.githubusercontent.com/tedsluis/nmap/master/img/basics_screenshot.jpg)
+[![nmap scan basics](https://raw.githubusercontent.com/tedsluis/nmap/master/img/basics_screenshot.jpg)](https://raw.githubusercontent.com/tedsluis/nmap/master/img/basics_screenshot.jpg)
    
 Bottom right corner: Host details:   
-[![nmap scan](https://raw.githubusercontent.com/tedsluis/nmap/master/img/details_screenshot.jpg)](https://raw.githubusercontent.com/tedsluis/nmap/master/img/details_screenshot.jpg)
+[![nmap scan details](https://raw.githubusercontent.com/tedsluis/nmap/master/img/details_screenshot.jpg)](https://raw.githubusercontent.com/tedsluis/nmap/master/img/details_screenshot.jpg)
     
 Top left corner: Port host info:  
-[![nmap scan](https://raw.githubusercontent.com/tedsluis/nmap/master/img/ports_screenshot.jpg)](https://raw.githubusercontent.com/tedsluis/nmap/master/img/ports_screenshot.jpg)
+[![nmap scan ports](https://raw.githubusercontent.com/tedsluis/nmap/master/img/ports_screenshot.jpg)](https://raw.githubusercontent.com/tedsluis/nmap/master/img/ports_screenshot.jpg)
 
 ## Prerequisites  
 
@@ -109,19 +111,62 @@ note: If your system does not meet these requirements then follow the installati
 
 ## Installation instructions
 
-### Install Nmap
+### Install packages
+  
+Ubuntu/Debian/Raspbian  
+````
+$ sudo apt-get install nmap traceroute perl git  
+````
+   
+Centos/RHEL  
+````
+$ yum install nmap traceroute perl git  
+````
+  
+Fedora  
+````
+$ dnf install nmap traceroute perl git 
+````
+   
+### Test packages  
+  
+To test nmap (specify our own subnet):  
+````
+$ nmap -O -n 192.168.1.0/24  
+````
+  
+To test traceroute:  
+````
+$ traceroute 8.8.8.8   
+````
+   
+### Clone repo  
+  
+Clone the repo to your locale host:
+````
+$ mkdir ~/git
+$ cd ~/git
+$ git clone https://github.com/tedsluis/nmap.git
+$ cd ~/git/nmap
+````
+    
+## Run nmapscan.pl
+  
+To run it (specify our own subnets):  
+````
+$ ./nmapscan.pl -subnet 192.168.1.0/24,192.168.11.0/24 
 
-### Install Traceroute
-
-### Install Perl
-
-### Install Git
-
-### Clone repo
-
-
-
-
+Interface=enp2s0 (ip=192.168.11.80)
+Interface=virbr0 (ip=192.168.122.1)
+Host gateway=192.168.11.1
+  192.168.1.0/24   (subnetwork=192.168.1.0/24,   netbit=24, subnetmask=255.255.255.0, network=192.168.1.0,   broadcast=192.168.1.255),   number of IP's=254
+  192.168.11.0/24  (subnetwork=192.168.11.0/24,  netbit=24, subnetmask=255.255.255.0, network=192.168.11.0,  broadcast=192.168.11.255),  number of IP's=254
+  192.168.122.1/24 (subnetwork=192.168.122.0/24, netbit=24, subnetmask=255.255.255.0, network=192.168.122.0, broadcast=192.168.122.255), number of IP's=254
+````
+Depeding on your system and network this will take quite a while!    
+Ones it is finshed you can view 'map.html' is a web browser.  
+  
+  
 ted.sluis@gmail.com
 
   
