@@ -1,8 +1,31 @@
 # nmap
-scan &amp; visualize subnets
+Scans subnets using nmap and visualizes network topology in a browser.  
+  
+Table of Contents  
+=================  
+
+   * [nmap](#nmap)  
+      * [Features](#features)
+      * [Network diagram](#network-diagram)  
+      * [Help](#help)  
+      * [Display host properties](#display-host-properties)  
+      * [Prerequisites](#prerequisites)  
+      * [Installation instructions](#installation-instructions)
+         * [Install Nmap](#install-nmap)
+         * [Install Traceroute](#install-traceroute)
+         * [Install Perl](#install-perl)
+         * [Install Git](#install-git)
+         * [Clone repo](#clone-repo)
+  
+## Features
+
+* Performs OS detection and port scanning.
+* Tracks subnet(s) gateways and route to internet.
+* Shows network diagram of subnets with hosts.
+* Displays MAC address, vendor type, IP address, hostname, gateway, netmask, OS type, etc.
 
 ## Network diagram
-[![nmap scan](https://raw.githubusercontent.com/tedsluis/nmap/master/nmapscan.jpg)](https://raw.githubusercontent.com/tedsluis/nmap/master/nmapscan.jpg)
+[![nmap scan](https://raw.githubusercontent.com/tedsluis/nmap/master/img/nmapscan.jpg)](https://raw.githubusercontent.com/tedsluis/nmap/master/img/nmapscan.jpg)
  
 ## Help
 ````
@@ -16,11 +39,12 @@ Optional:
        ./nmapscan.pl -debug                                    Display debug info.
        ./nmapscan.pl -help                                     This helptext.
 
-Examples:
+Example:
        ./nmapscan.pl -subnet 192.168.1.0/24,192.168.100.0/24
 
-View result 'map.html' in a webbrowser.
+View result 'map.html' in a webbrowser.  
 
+CIDR is <network>/<netbits>. 
 Lookup your Netbits:
 +------+----------+------------------------------------+
 | Net  | Number   |                                    |
@@ -57,8 +81,45 @@ Notes:
    - CIDR = network address + /netbits, for example: 192.168.1.0/24
    - Instead of the network address, any IP within the subnet is accepted.
    - Be sure 'nmap', 'traceroute' and 'network manager' are installed!
-   - You may need to do sudo (to become root) to run nmap.
-
+   - You may need to do sudo (to become root) to run nmap: $ sudo ./nmapscan.pl -subnet 192.168.1.0/24
 ````
+## Display host properties  
+   
+Top right corner: Basisc host info. 
+[![nmap scan](https://raw.githubusercontent.com/tedsluis/nmap/master/img/basics_screenshot.jpg)](https://raw.githubusercontent.com/tedsluis/nmap/master/img/basics_screenshot.jpg)
+   
+Bottom right corner: Host details:   
+[![nmap scan](https://raw.githubusercontent.com/tedsluis/nmap/master/img/details_screenshot.jpg)](https://raw.githubusercontent.com/tedsluis/nmap/master/img/details_screenshot.jpg)
+    
+Top left corner: Port host info:  
+[![nmap scan](https://raw.githubusercontent.com/tedsluis/nmap/master/img/ports_screenshot.jpg)](https://raw.githubusercontent.com/tedsluis/nmap/master/img/ports_screenshot.jpg)
+
+## Prerequisites  
+
+* nmap  
+* traceroute  
+* perl 
+* root permissions  
+
+note: If your system does not meet these requirements then follow the installation instructions.
+
+## Installation instructions
+
+### Install Nmap
+
+### Install Traceroute
+
+### Install Perl
+
+### Install Git
+
+### Clone repo
+
+
+
+
+ted.sluis@gmail.com
+
+  
 
 
