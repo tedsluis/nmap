@@ -71,7 +71,7 @@ function _traverseDOM(node) {
       $(go.Panel, "Auto",
         $(go.Shape, "RoundedRectangle",
           new go.Binding("fill", "color")),
-        $(go.TextBlock, { row: 0, column: 0, columnSpan: 2, font: "bold 12pt sans-serif" },
+        $(go.TextBlock, { row: 0, column: 0, columnSpan: 2, font: "bold 10pt sans-serif" },
           new go.Binding("text", "key"))
       ),
       $("Button",
@@ -95,7 +95,7 @@ function _traverseDOM(node) {
           new go.Binding("fill", "color")),
         $(go.Panel, "Table",
           { defaultAlignment: go.Spot.Left },
-          $(go.TextBlock, { row: 0, column: 0, columnSpan: 2, font: "bold 12pt sans-serif" },
+          $(go.TextBlock, { row: 0, column: 0, columnSpan: 2, font: "bold 10pt sans-serif" },
             new go.Binding("text", "key")),
           $(go.TextBlock, { row: 1, column: 0 }, "Basics:"),
           $(go.TextBlock, { row: 1, column: 1 }, new go.Binding("text", "basics"))
@@ -122,7 +122,7 @@ function _traverseDOM(node) {
           new go.Binding("fill", "color")),
         $(go.Panel, "Table",
           { defaultAlignment: go.Spot.Left },
-          $(go.TextBlock, { row: 0, column: 0, columnSpan: 2, font: "bold 12pt sans-serif" },
+          $(go.TextBlock, { row: 0, column: 0, columnSpan: 2, font: "bold 10pt sans-serif" },
             new go.Binding("text", "key")),
           $(go.TextBlock, { row: 1, column: 0 }, "ports:"),
           $(go.TextBlock, { row: 1, column: 1 }, new go.Binding("text", "ports"))
@@ -149,7 +149,7 @@ var details =
           new go.Binding("fill", "color")),
         $(go.Panel, "Table",
           { defaultAlignment: go.Spot.Left },
-          $(go.TextBlock, { row: 0, column: 0, columnSpan: 2, font: "bold 12pt sans-serif" },
+          $(go.TextBlock, { row: 0, column: 0, columnSpan: 2, font: "bold 10pt sans-serif" },
             new go.Binding("text", "key")),
           $(go.TextBlock, { row: 1, column: 0 }, "Details:"),
           $(go.TextBlock, { row: 1, column: 1 }, new go.Binding("text", "details"))
