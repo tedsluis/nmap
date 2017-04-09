@@ -22,7 +22,9 @@ Table of Contents
 * Performs OS detection and port scanning.
 * Tracks subnet(s) gateways and route to internet.
 * Shows network diagram of subnets with hosts.
+* Use the mouse to drag the host objects around.
 * Displays MAC address, vendor type, IP address, hostname, gateway, netmask, OS type, etc.
+* Click on the icons in the corners of the host objects to display the host properties.
 
 ## Network diagram
 [![nmap scan](https://raw.githubusercontent.com/tedsluis/nmap/master/img/nmapscan.jpg)](https://raw.githubusercontent.com/tedsluis/nmap/master/img/nmapscan.jpg)
@@ -84,6 +86,8 @@ Notes:
    - You may need to do sudo (to become root) to run nmap: $ sudo ./nmapscan.pl -subnet 192.168.1.0/24
 ````
 ## Display host properties  
+  
+Click on the icons in the corners of the hosts to display the host properties. There are 3 different types: Basic, detailed and port properties.  
    
 Top right corner: Basisc host info.  
 [![nmap scan](https://raw.githubusercontent.com/tedsluis/nmap/master/img/basics_screenshot.jpg)](https://raw.githubusercontent.com/tedsluis/nmap/master/img/basics_screenshot.jpg)
