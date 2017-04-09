@@ -171,6 +171,13 @@ Ones it is finshed you can view 'map.html' is a web browser.
 Watch a video at youtube: https://youtu.be/DMpabcP0r_U   
 [![Alt text](https://img.youtube.com/vi/DMpabcP0r_U/0.jpg)](https://www.youtube.com/watch?v=DMpabcP0r_U)   
   
+## GOJS framework   
+  
+* http://gojs.net/latest/doc/download.html
+* http://gojs.net/latest/doc/license.html
+  
+
+---------------------------  
   
 Ted Sluis
 ted.sluis@gmail.com  
