@@ -163,7 +163,7 @@ Host gateway=192.168.11.1
   192.168.11.0/24  (subnetwork=192.168.11.0/24,  netbit=24, subnetmask=255.255.255.0, network=192.168.11.0,  broadcast=192.168.11.255),  number of IP's=254
   192.168.122.1/24 (subnetwork=192.168.122.0/24, netbit=24, subnetmask=255.255.255.0, network=192.168.122.0, broadcast=192.168.122.255), number of IP's=254
 ````
-Depeding on your system and network this will take quite a while!    
+Depeding on your system and network scanning will take quite a while! On a raspberry pi it can even take up to an hour!    
 Ones it is finshed you can view 'map.html' is a web browser.  
   
 ## Video  
@@ -172,7 +172,9 @@ Watch a video at youtube: https://youtu.be/DMpabcP0r_U
 [![Alt text](https://img.youtube.com/vi/DMpabcP0r_U/0.jpg)](https://www.youtube.com/watch?v=DMpabcP0r_U)   
   
   
-ted.sluis@gmail.com
+Ted Sluis
+ted.sluis@gmail.com  
+https://www.youtube.com/tedsluis  
 
   
 
