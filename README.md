@@ -85,7 +85,7 @@ Notes:
 ````
 ## Display host properties  
    
-Top right corner: Basisc host info. 
+Top right corner: Basisc host info.  
 [![nmap scan](https://raw.githubusercontent.com/tedsluis/nmap/master/img/basics_screenshot.jpg)](https://raw.githubusercontent.com/tedsluis/nmap/master/img/basics_screenshot.jpg)
    
 Bottom right corner: Host details:   
