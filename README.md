@@ -14,7 +14,9 @@ Table of Contents
          * [Install packages](#install-packages)
          * [Test packages](#test-packages)
          * [Clone repo](#clone-repo)
+         * [Install gojs](#install-gojs)
       * [Run nmapscan.pl](#run-nmapscanpl)
+      * [Nmap video](#nmap-video)
   
 ## Features
   
@@ -149,6 +151,15 @@ $ cd ~/git
 $ git clone https://github.com/tedsluis/nmap.git
 $ cd ~/git/nmap
 ````
+   
+### Install GoJS
+  
+To install the GoJS framework:  
+````
+$ cd ~/git/nmap
+$ wget https://gojs.net/latest/release/go.js
+````
+Note: read the license info!
     
 ## Run nmapscan.pl
   
@@ -166,12 +177,12 @@ Host gateway=192.168.11.1
 Depeding on your system and network scanning will take quite a while! On a raspberry pi it can even take up to an hour!    
 Ones it is finshed you can view 'map.html' is a web browser.  
   
-## Video  
+## Nmap video  
   
 Watch a video at youtube: https://youtu.be/DMpabcP0r_U   
 [![Alt text](https://img.youtube.com/vi/DMpabcP0r_U/0.jpg)](https://www.youtube.com/watch?v=DMpabcP0r_U)   
   
-## GOJS framework   
+## GoJS framework   
   
 * http://gojs.net/latest/doc/download.html
 * http://gojs.net/latest/doc/license.html
