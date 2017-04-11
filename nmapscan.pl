@@ -64,10 +64,32 @@ Notes:
    - Number of hosts = usable number of hosts.
    - CIDR = network address + /netbits, for example: 192.168.1.0/24
    - Instead of the network address, any IP within the subnet is accepted.
-   - Be sure 'nmap', 'traceroute' and 'network manager' are installed!
+   - Be sure 'nmap', 'traceroute', 'iproute' and 'gojs' are installed!
 
 \n";
-exit 0;
+     exit 0;
+}
+
+#
+# Prerequisites check
+if (! -e "go.js") {
+     print "\nNo 'go.js' file found!\nIf you wish to use the GoJS library for your private evaluation, you may do so only under the terms of the Evaluation License Agreement.\nCheck http://gojs.net/latest/doc/download.html\n\n";
+     exit;
+}
+my @cmd;
+@cmd=`which nmap`;
+if (join('',@cmd) !~ /nmap/) {
+     print "\nPackage 'nmap' not found!";
+     exit;
+}
+@cmd=`which ip`;
+if (join('',@cmd) !~ /ip/) {
+     print "\nPackage 'iproute' not found!";
+     exit;
+}@cmd=`which traceroute`;
+if (join('',@cmd) !~ /traceroute/) {
+     print "\nPackage 'traceroute' not found!";
+     exit;
 }
 
 #
