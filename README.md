@@ -14,7 +14,9 @@ Table of Contents
          * [Install packages](#install-packages)
          * [Test packages](#test-packages)
          * [Clone repo](#clone-repo)
+         * [Install gojs](#install-gojs)
       * [Run nmapscan.pl](#run-nmapscanpl)
+      * [Nmap video](#nmap-video)
   
 ## Features
   
@@ -84,7 +86,7 @@ Notes:
    - Number of hosts = usable number of hosts.
    - CIDR = network address + /netbits, for example: 192.168.1.0/24
    - Instead of the network address, any IP within the subnet is accepted.
-   - Be sure 'nmap', 'traceroute' and 'network manager' are installed!
+   - Be sure 'nmap', 'traceroute', 'iproute' and 'gojs' are installed!
    - You may need to do sudo (to become root) to run nmap: $ sudo ./nmapscan.pl -subnet 192.168.1.0/24
 ````
 ## Display host properties  
@@ -104,7 +106,9 @@ Top left corner: Port host info:
 
 * nmap  
 * traceroute  
+* iproute
 * perl 
+* gojs (check the license)  
 * root permissions  
 
 note: If your system does not meet these requirements then follow the installation instructions.
@@ -115,17 +119,17 @@ note: If your system does not meet these requirements then follow the installati
   
 Ubuntu/Debian/Raspbian  
 ````
-$ sudo apt-get install nmap traceroute perl git  
+$ sudo apt-get install nmap traceroute iproute perl git wget  
 ````
    
 Centos/RHEL  
 ````
-$ yum install nmap traceroute perl git  
+$ yum install nmap traceroute iproute perl git wget   
 ````
   
 Fedora  
 ````
-$ dnf install nmap traceroute perl git 
+$ dnf install nmap traceroute iproute perl git wget 
 ````
    
 ### Test packages  
@@ -139,6 +143,11 @@ To test traceroute:
 ````
 $ traceroute 8.8.8.8   
 ````
+  
+To test iproute:
+````
+$ ip add
+````
    
 ### Clone repo  
   
@@ -149,6 +158,15 @@ $ cd ~/git
 $ git clone https://github.com/tedsluis/nmap.git
 $ cd ~/git/nmap
 ````
+   
+### Install GoJS
+  
+To install the GoJS framework:  
+````
+$ cd ~/git/nmap
+$ wget https://gojs.net/latest/release/go.js
+````
+Note: read the license info!
     
 ## Run nmapscan.pl
   
@@ -166,13 +184,15 @@ Host gateway=192.168.11.1
 Depeding on your system and network scanning will take quite a while! On a raspberry pi it can even take up to an hour!    
 Ones it is finshed you can view 'map.html' is a web browser.  
   
-## Video  
-  
+=======
+## Nmap video  
+   
 Watch a video at youtube: https://youtu.be/DMpabcP0r_U   
 [![Alt text](https://img.youtube.com/vi/DMpabcP0r_U/0.jpg)](https://www.youtube.com/watch?v=DMpabcP0r_U)   
   
-## GOJS framework   
+## GoJS framework   
   
+If you wish to use the GoJS library for your private evaluation, you may do so only under the terms of the Evaluation License Agreement.
 * http://gojs.net/latest/doc/download.html
 * http://gojs.net/latest/doc/license.html
   
