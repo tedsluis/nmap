@@ -431,14 +431,18 @@ foreach my $ipaddress (sort keys %subnets) {
      $color="orange"      if  (exists $route{$ipaddress});
      $color="yellow"      if  (exists $gateway{$ipaddress});
      my $name=NAME($ipaddress);
+     # 
+     # Save host objects
      push(@nodes,"{ key:  \"${name}\", basics: \"".join("\\n",@basics)."\", details: \"".join("\\n",@details)."\",ports: \"".join("\\n",@ports)."\", color: \"$color\", category: \"name\" }");
-     if (exists $gateway{$subnets{$ipaddress}}) {
+     #
+     # Save links between hostobjects
+     if ((exists $gateway{$subnets{$ipaddress}}) && (NAME($gateway{$subnets{$ipaddress}}) !~ /^${name}$/)) {
           push(@links,"{ from: \"${name}\", to: \"".NAME($gateway{$subnets{$ipaddress}})."\" }");
      }
 }
 
 #
-# Add Internet node + link
+# Add Internet host object + link
 if ($internetgateway) {
      push(@nodes,"{ key:  \"Internet Gateway\", basics: \"Hops:".join("\\n",@internetroute)."\", details: \"".join("--->",@internetroute)."\",ports: \"*any*\", color: \"yellow\", category: \"name\" }");
      push(@links,"{ from: \"".NAME($internetgateway)."\", to: \"Internet Gateway\" }");
