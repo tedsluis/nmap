@@ -318,7 +318,7 @@ foreach my $subnet (@subnets) {
                $host{$ipaddress}{'devicetype'}=$1;
                print "DEVICE TYPE=$1\n" if ($debug);
                next;
-          } elsif ($line =~ /Running:\s(.+)$/) {
+          } elsif ($line =~ /Running:?\s(.+)$/) {
                $host{$ipaddress}{'running'}=$1;
                print "RUNNING=$1\n" if ($debug);
                next;
@@ -338,8 +338,8 @@ foreach my $subnet (@subnets) {
                push(@{$fact{$ipaddress}},"$1.");
                print "WARNING=$1\n" if ($debug);
                next;
-          } elsif ($line =~ /(All\s1000\sscanned\sports)\son\s(.+ )(\sare\sclosed)/) {
-               push(@{$port{$ipaddress}},"$1.$3");
+          } elsif ($line =~ /(All\s1000\sscanned\sports)\son\s(.+)\s(are\s.+)/) {
+               push(@{$port{$ipaddress}},"$1 $3");
                print "NOT SHOWN=$1.$3\n" if ($debug);
                next;
           } elsif ($line =~ /Aggressive OS guesses:\s(.+)$/) {
