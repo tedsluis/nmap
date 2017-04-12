@@ -465,10 +465,11 @@ foreach my $route (keys %route) {
 my $node= "diagram.model.nodeDataArray = [".join(",",@nodes)."];";
 my $link= "diagram.model.linkDataArray = [".join(",",@links)."];";
 
-open my $in,  '<', "default-map.html" or die "Can't read default-map.html file: $!";
+#open my $in,  '<', "default-map.html" or die "Can't read default-map.html file: $!";
 open my $out, '>', "map.html"     or die "Can't write map.html file: $!";
 
-while( <$in> )
+#while( <$in> )
+while( <DATA> )
      {
      # Insert host data and links
      s/^\s*diagram\.model\.nodeDataArray\s=\s\[.+$/${node}/g;
@@ -476,6 +477,206 @@ while( <$in> )
      print $out $_;
 }
 
-close $in;
+#close $in;
 close $out;
+
+#
+# End for perl script
+exit
+
+#
+# HTML data for map.html 
+__DATA__
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="Nmap Scan" >
+  <title>Nmap scan</title>
+  <script src="go.js"></script>
+  <script id="code">
+var head = document.getElementsByTagName("head")[0];
+
+function goCode(pre, w, h, diagramclass, parentid) {
+  if (diagramclass === undefined) diagramclass = go.Diagram;
+  if (typeof pre === "string") pre = document.getElementById(pre);
+  var div = document.createElement("div");
+  div.style.width = w + "px";
+  div.style.height = h + "px";
+  div.className = "diagramStyling";
+  var parent;
+  if (parentid === undefined) {
+    parent = pre.parentNode;
+  } else {
+    parent = document.getElementById(parentid);
+  }
+  parent.appendChild(div);
+  var f = eval("(function (diagram, $) {" + pre.textContent + "})");
+  f(new diagramclass(div), go.GraphObject.make);
+}
+
+function goIntro() {
+  _traverseDOM(document);
+}
+
+function _traverseDOM(node) {
+  if (node.nodeType === 1 && node.nodeName === "A" && !node.getAttribute("href")) {
+    var text = node.innerHTML.split(".");
+    if (text.length === 1) {
+      node.setAttribute("href", "../api/symbols/" + text[0] + ".html");
+      node.setAttribute("target", "api");
+    } else if (text.length === 2) {
+      node.setAttribute("href", "../api/symbols/" + text[0] + ".html" + "#" + text[1]);
+      node.setAttribute("target", "api");
+    } else {
+      alert("Unknown API reference: " + node.innerHTML);
+    }
+  }
+  for (var i = 0; i < node.childNodes.length; i++) {
+    _traverseDOM(node.childNodes[i]);
+  }
+}
+
+  </script>
+</head>
+<body onload="goIntro()">
+<div id="content">
+
+
+<h2 id="ChangingCategoryOfPart">Network map</h2>
+<script data-language="javascript" id="changingCategory">
+  function changeCategory(obj, category) {
+    var node = obj.part;
+    if (node) {
+      var diagram = node.diagram;
+      diagram.startTransaction("changeCategory");
+      diagram.model.setCategoryForNodeData(node.data, category);
+      diagram.commitTransaction("changeCategory");
+    }
+  }
+
+  var name=
+    $(go.Node, "Spot",
+      $(go.Panel, "Auto",
+        $(go.Shape, "RoundedRectangle",
+          new go.Binding("fill", "color")),
+        $(go.TextBlock, { row: 0, column: 0, columnSpan: 2, font: "bold 10pt sans-serif" },
+          new go.Binding("text", "key"))
+      ),
+      $("Button",
+        { alignment: go.Spot.TopRight },
+        $(go.Shape, "ThinCross", { width: 3, height: 3 }),
+          { click: function(e, obj) { changeCategory(obj,'basics');} }),
+      $("Button",
+        { alignment: go.Spot.TopLeft },
+        $(go.Shape, "ThinCross", { width: 3, height: 3 }),
+          { click: function(e, obj) { changeCategory(obj,'ports');} }),
+      $("Button",
+        { alignment: go.Spot.BottomRight },
+        $(go.Shape, "ThinCross", { width: 3, height: 3 }),
+          { click: function(e, obj) { changeCategory(obj,'details');} })
+    );
+
+  var basics =
+    $(go.Node, "Spot",
+      $(go.Panel, "Auto",
+        $(go.Shape, "RoundedRectangle",
+          new go.Binding("fill", "color")),
+        $(go.Panel, "Table",
+          { defaultAlignment: go.Spot.Left },
+          $(go.TextBlock, { row: 0, column: 0, columnSpan: 2, font: "bold 10pt sans-serif" },
+            new go.Binding("text", "key")),
+          $(go.TextBlock, { row: 1, column: 0 }, "Basics:"),
+          $(go.TextBlock, { row: 1, column: 1 }, new go.Binding("text", "basics"))
+        )
+      ),
+      $("Button",
+        { alignment: go.Spot.TopRight },
+        $(go.Shape, "CircleLine", { width: 4, height: 4 }),
+          { click: function(e, obj) { changeCategory(obj,'name');} }),
+     $("Button",
+        { alignment: go.Spot.TopLeft },
+        $(go.Shape, "ThinCross", { width: 4, height: 4 }),
+          { click: function(e, obj) { changeCategory(obj,'ports');} }),
+     $("Button",
+        { alignment: go.Spot.BottomRight },
+        $(go.Shape, "ThinCross", { width: 4, height: 4 }),
+          { click: function(e, obj) { changeCategory(obj,'details');} })
+    );
+
+  var ports =
+    $(go.Node, "Spot",
+      $(go.Panel, "Auto",
+        $(go.Shape, "RoundedRectangle",
+          new go.Binding("fill", "color")),
+        $(go.Panel, "Table",
+          { defaultAlignment: go.Spot.Left },
+          $(go.TextBlock, { row: 0, column: 0, columnSpan: 2, font: "bold 10pt sans-serif" },
+            new go.Binding("text", "key")),
+          $(go.TextBlock, { row: 1, column: 0 }, "ports:"),
+          $(go.TextBlock, { row: 1, column: 1 }, new go.Binding("text", "ports"))
+        )
+      ),
+      $("Button",
+        { alignment: go.Spot.TopRight },
+        $(go.Shape, "ThinCross", { width: 4, height: 4 }),
+          { click: function(e, obj) { changeCategory(obj,'basics');} }),
+     $("Button",
+        { alignment: go.Spot.TopLeft },
+        $(go.Shape, "CircleLine", { width: 4, height: 4 }),
+          { click: function(e, obj) { changeCategory(obj,'name');} }),
+     $("Button",
+        { alignment: go.Spot.BottomRight },
+        $(go.Shape, "ThinCross", { width: 4, height: 4 }),
+          { click: function(e, obj) { changeCategory(obj,'details');} })
+    );
+
+var details =
+    $(go.Node, "Spot",
+      $(go.Panel, "Auto",
+        $(go.Shape, "RoundedRectangle",
+          new go.Binding("fill", "color")),
+        $(go.Panel, "Table",
+          { defaultAlignment: go.Spot.Left },
+          $(go.TextBlock, { row: 0, column: 0, columnSpan: 2, font: "bold 10pt sans-serif" },
+            new go.Binding("text", "key")),
+          $(go.TextBlock, { row: 1, column: 0 }, "Details:"),
+          $(go.TextBlock, { row: 1, column: 1 }, new go.Binding("text", "details"))
+        )
+      ),
+      $("Button",
+        { alignment: go.Spot.TopRight },
+        $(go.Shape, "ThinCross", { width: 4, height: 4 }),
+          { click: function(e, obj) { changeCategory(obj,'basics');} }),
+     $("Button",
+        { alignment: go.Spot.TopLeft },
+        $(go.Shape, "ThinCross", { width: 4, height: 4 }),
+          { click: function(e, obj) { changeCategory(obj,'ports');} }),
+     $("Button",
+        { alignment: go.Spot.BottomRight },
+        $(go.Shape, "CircleLine", { width: 4, height: 4 }),
+          { click: function(e, obj) { changeCategory(obj,'name');} })
+    );
+
+
+
+  var templmap = new go.Map("string", go.Node);
+  templmap.add("name", name);
+  templmap.add("basics", basics);
+  templmap.add("ports", ports);
+  templmap.add("details", details);
+  diagram.nodeTemplateMap = templmap;
+
+  diagram.layout = $(go.ForceDirectedLayout,{ maxIterations: 200, defaultSpringLength: 30, defaultElectricalCharge: 100 });
+
+diagram.model.nodeDataArray = [ ];
+diagram.model.linkDataArray = [ ];
+</script>
+<script>goCode("changingCategory", 1900, 1080)</script>
+
+
+</div>
+</body>
+</html>
+
 
