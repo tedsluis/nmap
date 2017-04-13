@@ -497,7 +497,16 @@ __DATA__
 var head = document.getElementsByTagName("head")[0];
 
 function goCode(pre, w, h, diagramclass, parentid) {
-  if (diagramclass === undefined) diagramclass = go.Diagram;
+  if (diagramclass === undefined) { diagramclass = $(go.Diagram, "myDiagramDiv",  // must name or refer to the DIV HTML element
+        {
+          initialAutoScale: go.Diagram.Uniform,  // an initial automatic zoom-to-fit
+          contentAlignment: go.Spot.Center,  // align document to the center of the viewport
+          layout:
+            $(ContinuousForceDirectedLayout,  // automatically spread nodes apart while dragging
+              { defaultSpringLength: 30, defaultElectricalCharge: 100 }),
+          // do an extra layout at the end of a move
+          "SelectionMoved": function(e) { e.diagram.layout.invalidateLayout(); }
+        });}
   if (typeof pre === "string") pre = document.getElementById(pre);
   var div = document.createElement("div");
   div.style.width = w + "px";
@@ -539,7 +548,7 @@ function _traverseDOM(node) {
   </script>
 </head>
 <body onload="goIntro()">
-<div id="content">
+<div id="myDiagramDiv">
 
 
 <h2 id="ChangingCategoryOfPart">Network map</h2>
