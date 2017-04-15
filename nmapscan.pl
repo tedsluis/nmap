@@ -327,7 +327,7 @@ foreach my $subnet (@subnets) {
                print "NOT SHOWN=$1\n" if ($debug);       
                next;
           } elsif ($line =~ /OS\sCPE:\s(.+)$/) {
-               $host{$ipaddress}{'oc_cpe'}="$1";
+               $host{$ipaddress}{'os_cpe'}="$1";
                print "OS CPE=$1\n" if ($debug);
                next;
           } elsif ($line =~ /OS\sdetails:\s(.+)$/) {
@@ -404,27 +404,45 @@ sub NAME(@) {
 # Compose subnet and host data
 my @nodes;
 my @links;
+my $tabledata="";
 foreach my $ipaddress (sort keys %subnets) {
      my @basics;
      my @details;
      my @ports;
-     my $subnet=$subnets{$ipaddress};
+     my ($subnet,$hostname,$gateway,$subnetmask,$devicetype,$running,$mac,$vendor,$status,$latency,$hop,$os_cpe,$os_details,$fact,$port);
+     $subnet= $subnets{$ipaddress};
+     $gateway=   $gateway{$subnets{$ipaddress}}  if  (exists $gateway{$subnets{$ipaddress}});
+     $subnetmask=$cidr{$subnet}{'subnetmask'}    if  (exists $cidr{$subnet});
+     $hostname=  $host{$ipaddress}{'hostname'}   if  (exists $host{$ipaddress}{'hostname'});
+     $devicetype=$host{$ipaddress}{'devicetype'} if  (exists $host{$ipaddress}{'devicetype'});
+     $running=   $host{$ipaddress}{'running'}    if  (exists $host{$ipaddress}{'running'});
+     $mac=       $host{$ipaddress}{'mac'}        if  (exists $host{$ipaddress}{'mac'});
+     $vendor=    $host{$ipaddress}{'vendor'}     if  (exists $host{$ipaddress}{'vendor'});
+     $status=    $host{$ipaddress}{'status'}     if  (exists $host{$ipaddress}{'status'});
+     $latency=   $host{$ipaddress}{'latency'}    if  (exists $host{$ipaddress}{'latency'});
+     $hop=       $host{$ipaddress}{'hops'}       if  (exists $host{$ipaddress}{'hops'});
+     $os_cpe=    $host{$ipaddress}{'os_cpe'}     if  (exists $host{$ipaddress}{'os_cpe'});
+     $os_details=$host{$ipaddress}{'os_details'} if  (exists $host{$ipaddress}{'os_details'});
+     $fact=      join("\\n",@{$fact{$ipaddress}})if ((exists $fact{$ipaddress}) && (@{$fact{$ipaddress}}));
+     $port=      join("\\n",@{$port{$ipaddress}})if ((exists $port{$ipaddress}) && (@{$port{$ipaddress}}));
+
      push(@basics, "Subnet: "     .$subnet);
-     push(@basics, "Gateway: "    .$gateway{$subnets{$ipaddress}} );
-     push(@basics, "Netmask: "    .$cidr{$subnet}{'subnetmask'}   ) if  (exists $cidr{$subnet});
-     push(@basics, "Device type: ".$host{$ipaddress}{'devicetype'}) if  (exists $host{$ipaddress}{'devicetype'});
-     push(@basics, "Running: "    .$host{$ipaddress}{'running'}   ) if  (exists $host{$ipaddress}{'running'});
-     push(@basics, "MAC: "        .$host{$ipaddress}{'mac'}       ) if  (exists $host{$ipaddress}{'mac'});
-     push(@basics, "Vendor: "     .$host{$ipaddress}{'vendor'}    ) if  (exists $host{$ipaddress}{'vendor'});
-     push(@details,"Status: "     .$host{$ipaddress}{'status'}    ) if  (exists $host{$ipaddress}{'status'});
-     push(@details,"Latency: "    .$host{$ipaddress}{'latency'}   ) if  (exists $host{$ipaddress}{'latency'});
-     push(@details,"Hops: "       .$host{$ipaddress}{'hops'}      ) if  (exists $host{$ipaddress}{'hops'});
-     push(@details,"OC CPE: "     .$host{$ipaddress}{'oc_cpe'}    ) if  (exists $host{$ipaddress}{'oc_cpe'});
-     push(@details,"OS Details: " .$host{$ipaddress}{'os_details'}) if  (exists $host{$ipaddress}{'os_details'});
-     push(@details,"Warnings: ",join("\\n",@{$fact{$ipaddress}}))   if ((exists $fact{$ipaddress}) && (@{$fact{$ipaddress}}));
-     push(@ports,               join("\\n",@{$port{$ipaddress}}))   if ((exists $port{$ipaddress}) && (@{$port{$ipaddress}}));
+     push(@basics, "Gateway: "    .$gateway)    if ($gateway);
+     push(@basics, "Netmask: "    .$subnetmask) if ($subnetmask);
+     push(@basics, "Device type: ".$devicetype) if ($devicetype);
+     push(@basics, "Running: "    .$running)    if ($running);
+     push(@basics, "MAC: "        .$mac)        if ($mac);
+     push(@basics, "Vendor: "     .$vendor)     if ($vendor);
+     push(@details,"Status: "     .$status)     if ($status);
+     push(@details,"Latency: "    .$latency)    if ($latency);
+     push(@details,"Hops: "       .$hop)        if ($hop);
+     push(@details,"OC CPE: "     .$os_cpe)     if ($os_cpe);
+     push(@details,"OS Details: " .$os_details) if ($os_details);
+     push(@details,"Warnings: "   .$fact)       if ($fact);
+     push(@ports,                  $port)       if ($port);
+
      my $color=$host{$ipaddress}{'color'} || "lightyellow";
-     $color="lightsalmon" if ((exists $host{$ipaddress}{'oc_cpe'}) && ($host{$ipaddress}{'oc_cpe'} =~ /linux/i));
+     $color="lightsalmon" if ((exists $host{$ipaddress}{'os_cpe'}) && ($host{$ipaddress}{'os_cpe'} =~ /linux/i));
      $color="green"       if ((exists $host{$ipaddress}{'vendor'}) && ($host{$ipaddress}{'vendor'} =~ /apple/i));
      $color="lightblue"   if ((exists $host{$ipaddress}{'vendor'}) && ($host{$ipaddress}{'vendor'} =~ /raspberry/i));
      $color="lightgreen"  if ((exists $host{$ipaddress}{'vendor'}) && ($host{$ipaddress}{'vendor'} =~ /intel/i));
@@ -439,6 +457,23 @@ foreach my $ipaddress (sort keys %subnets) {
      if ((exists $gateway{$subnets{$ipaddress}}) && (NAME($gateway{$subnets{$ipaddress}}) !~ /^${name}$/)) {
           push(@links,"{ from: \"${name}\", to: \"".NAME($gateway{$subnets{$ipaddress}})."\" }");
      }
+     my $running_short=substr($running||"", 0, 25);
+     my $os_cpe_short=substr($os_cpe||"", 0, 25);
+     my $os_details_short=substr($os_details||"", 0, 25);
+     $tabledata.='  <tr>
+    <td>'.($hostname||"").'</td>
+    <td>'.($ipaddress||"").'</td>
+    <td>'.($mac||"").'</td>
+    <td>'.($vendor||"").'</td>
+    <td>'.($subnetmask||"").'</td>
+    <td>'.($gateway||"").'</td>
+    <td>'.($devicetype||"").'</td>
+    <td>'.($running).'</td>
+    <td>'.($hop||"").'</td>
+    <td>'.($os_cpe).'</td>
+    <td>'.($os_details).'</td>
+  </tr>
+';
 }
 
 #
@@ -474,6 +509,7 @@ while( <DATA> )
      # Insert host data and links
      s/^\s*diagram\.model\.nodeDataArray\s=\s\[.+$/${node}/g;
      s/^\s*diagram\.model\.linkDataArray\s=\s\[.+$/${link}/g;
+     s/^TABLEDATA/${tabledata}/;
      print $out $_;
 }
 
@@ -497,16 +533,7 @@ __DATA__
 var head = document.getElementsByTagName("head")[0];
 
 function goCode(pre, w, h, diagramclass, parentid) {
-  if (diagramclass === undefined) { diagramclass = $(go.Diagram, "myDiagramDiv",  // must name or refer to the DIV HTML element
-        {
-          initialAutoScale: go.Diagram.Uniform,  // an initial automatic zoom-to-fit
-          contentAlignment: go.Spot.Center,  // align document to the center of the viewport
-          layout:
-            $(ContinuousForceDirectedLayout,  // automatically spread nodes apart while dragging
-              { defaultSpringLength: 30, defaultElectricalCharge: 100 }),
-          // do an extra layout at the end of a move
-          "SelectionMoved": function(e) { e.diagram.layout.invalidateLayout(); }
-        });}
+  if (diagramclass === undefined) diagramclass = go.Diagram;
   if (typeof pre === "string") pre = document.getElementById(pre);
   var div = document.createElement("div");
   div.style.width = w + "px";
@@ -548,7 +575,7 @@ function _traverseDOM(node) {
   </script>
 </head>
 <body onload="goIntro()">
-<div id="myDiagramDiv">
+<div id="content">
 
 
 <h2 id="ChangingCategoryOfPart">Network map</h2>
@@ -682,6 +709,64 @@ diagram.model.linkDataArray = [ ];
 </script>
 <script>goCode("changingCategory", 1900, 1080)</script>
 
+
+</div>
+<div>
+<table id="hosts" style="width:100%">
+ <tbody>
+  <tr>
+    <th>Host name</th>
+    <th>IP Address</th> 
+    <th>MAC Address</th> 
+    <th>Vendor</th> 
+    <th>Netmask</th>
+    <th>Gateway</th>
+    <th>Device type</th>
+    <th>Running</th>
+    <th>Hops</th>
+    <th>OC CP</th>
+    <th>OC Details</th>
+  </tr>
+TABLEDATA
+ </tbody>
+</table>
+
+<script src="tablefilter/tablefilter.js"></script>
+
+<script data-config>
+    var filtersConfig = {
+        base_path: '/',
+        col_3: 'select',
+        col_4: 'select',
+        col_5: 'select',
+        col_6: 'select',
+        col_8: 'select',
+        alternate_rows: true,
+        rows_counter: true,
+        btn_reset: true,
+        loader: true,
+        status_bar: true,
+        mark_active_columns: true,
+        highlight_keywords: true,
+        col_types: [
+            'string',
+            'ipaddress',
+            'string',
+            'string',
+            'ipaddress',
+            'ipaddress',
+            'string',
+            'string',
+            'number',
+            'string',
+            'string'
+        ],
+        extensions:[{ name: 'sort' }]
+    };
+
+    var tf = new TableFilter('hosts', filtersConfig);
+    tf.init();
+</script>
 
 </div>
 </body>
