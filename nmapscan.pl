@@ -461,6 +461,7 @@ foreach my $ipaddress (sort keys %subnets) {
      my $os_cpe_short=substr($os_cpe||"", 0, 25);
      my $os_details_short=substr($os_details||"", 0, 25);
      $tabledata.='  <tr>
+    <td>'.($subnet||"").'</td>
     <td>'.($hostname||"").'</td>
     <td>'.($ipaddress||"").'</td>
     <td>'.($mac||"").'</td>
@@ -715,6 +716,7 @@ diagram.model.linkDataArray = [ ];
 <table id="hosts" style="width:100%">
  <tbody>
   <tr>
+    <th>Network</th>
     <th>Host name</th>
     <th>IP Address</th> 
     <th>MAC Address</th> 
@@ -749,6 +751,7 @@ TABLEDATA
         mark_active_columns: true,
         highlight_keywords: true,
         col_types: [
+            'string',
             'string',
             'ipaddress',
             'string',
