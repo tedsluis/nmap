@@ -738,11 +738,11 @@ TABLEDATA
 <script data-config>
     var filtersConfig = {
         base_path: '/',
-        col_3: 'select',
         col_4: 'select',
         col_5: 'select',
         col_6: 'select',
-        col_8: 'select',
+        col_7: 'select',
+        col_9: 'select',
         alternate_rows: true,
         rows_counter: true,
         btn_reset: true,
