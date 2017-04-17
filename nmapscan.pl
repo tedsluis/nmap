@@ -282,7 +282,7 @@ foreach my $subnet (@subnets) {
                # parse IP address  
                $ipaddress=$1;
                $host{$ipaddress}{'subnet'}=$subnet;
-               $host{$ipaddress}{'color'}='lightyellow';
+               $host{$ipaddress}{'color'}='gold';
                $subnets{$ipaddress}=$subnet;
                print "++++++++++++++ SCAN HOST IP =$ipaddress, subnet=$subnet +++++++++++++++++\n" if ($debug);
                #
@@ -441,13 +441,19 @@ foreach my $ipaddress (sort keys %subnets) {
      push(@details,"Warnings: "   .$fact)       if ($fact);
      push(@ports,                  $port)       if ($port);
 
-     my $color=$host{$ipaddress}{'color'} || "lightyellow";
-     $color="lightsalmon" if ((exists $host{$ipaddress}{'os_cpe'}) && ($host{$ipaddress}{'os_cpe'} =~ /linux/i));
-     $color="green"       if ((exists $host{$ipaddress}{'vendor'}) && ($host{$ipaddress}{'vendor'} =~ /apple/i));
-     $color="lightblue"   if ((exists $host{$ipaddress}{'vendor'}) && ($host{$ipaddress}{'vendor'} =~ /raspberry/i));
-     $color="lightgreen"  if ((exists $host{$ipaddress}{'vendor'}) && ($host{$ipaddress}{'vendor'} =~ /intel/i));
+     my $color=$host{$ipaddress}{'color'} || "gold";
+     $color="lightsalmon" if ((exists $host{$ipaddress}{'os_cpe'})     && ($host{$ipaddress}{'os_cpe'}     =~ /linux/i));
+     $color="lime"        if ((exists $host{$ipaddress}{'vendor'})     && ($host{$ipaddress}{'vendor'}     =~ /apple/i));
+     $color="lightblue"   if ((exists $host{$ipaddress}{'vendor'})     && ($host{$ipaddress}{'vendor'}     =~ /raspberry/i));
+     $color="lightgreen"  if ((exists $host{$ipaddress}{'vendor'})     && ($host{$ipaddress}{'vendor'}     =~ /intel/i));
+     $color="chartreuse"  if ((exists $host{$ipaddress}{'vendor'})     && ($host{$ipaddress}{'vendor'}     =~ /netgear/i));
+     $color="chartreuse"  if ((exists $host{$ipaddress}{'devicetype'}) && ($host{$ipaddress}{'devicetype'} =~ /switch/i));
+     $color="tomato"      if ((exists $host{$ipaddress}{'vendor'})     && ($host{$ipaddress}{'vendor'}     =~ /hewlett\spackard/i));
+     $color="green"       if ((exists $host{$ipaddress}{'vendor'})     && ($host{$ipaddress}{'vendor'}     =~ /motorola/i));
+     $color="dodgerblue"  if ((exists $host{$ipaddress}{'os_details'}) && ($host{$ipaddress}{'os_details'} =~ /windows/i));
+     $color="olivedrab"   if ((exists $host{$ipaddress}{'vendor'})     && ($host{$ipaddress}{'vendor'}     =~ /OnePlus/i));
      $color="orange"      if  (exists $route{$ipaddress});
-     $color="yellow"      if  (exists $gateway{$ipaddress});
+     $color="aquamarine"  if ((exists $gateway{$subnet}) && ($gateway{$subnet} =~ /^$ipaddress$/));
      my $name=NAME($ipaddress);
      # 
      # Save host objects
@@ -457,10 +463,12 @@ foreach my $ipaddress (sort keys %subnets) {
      if ((exists $gateway{$subnets{$ipaddress}}) && (NAME($gateway{$subnets{$ipaddress}}) !~ /^${name}$/)) {
           push(@links,"{ from: \"${name}\", to: \"".NAME($gateway{$subnets{$ipaddress}})."\" }");
      }
-     my $running_short=substr($running||"", 0, 25);
-     my $os_cpe_short=substr($os_cpe||"", 0, 25);
-     my $os_details_short=substr($os_details||"", 0, 25);
-     $tabledata.='  <tr>
+     #
+     # Remove double words
+     $os_cpe =~ s/(\b\S{4,30})(.+)\1/${1}${2}\//i;
+     # 
+     # construct table row
+     $tabledata.='  <tr bgcolor="'.$color.'">
     <td>'.($subnet||"").'</td>
     <td>'.($hostname||"").'</td>
     <td>'.($ipaddress||"").'</td>
