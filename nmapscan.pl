@@ -746,6 +746,7 @@ TABLEDATA
 <script data-config>
     var filtersConfig = {
         base_path: '/',
+        col_0: 'select',
         col_4: 'select',
         col_5: 'select',
         col_6: 'select',
