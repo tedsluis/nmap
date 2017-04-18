@@ -246,10 +246,10 @@ sub TraceRoute(@) {
                               print "      NO GATEWAY FOUND (HOP=1)\n" if ($debug);
                          }
                     }
-		    # Gateway Host IP's other subnets
-		    if ((exists $hostips{$ipaddress}) && (!exists $gateway{$subnets{$ipaddress}}) && (exists $subnets{$hostgateway})){
+                    # Gateway Host IP's other subnets
+                    if ((exists $hostips{$ipaddress}) && (!exists $gateway{$subnets{$ipaddress}}) && (exists $subnets{$hostgateway})){
                          foreach my $ip (keys %hostips) {
-		              $gateway{$subnets{$ipaddress}}=$ip if ($subnets{$ip} =~ /^$subnets{$hostgateway}$/);
+                         $gateway{$subnets{$ipaddress}}=$ip if ($subnets{$ip} =~ /^$subnets{$hostgateway}$/);
                          }
                     }
                     # subnet is reachable using hostip
@@ -545,7 +545,7 @@ function goCode(pre, w, h, diagramclass, parentid) {
   if (diagramclass === undefined) diagramclass = go.Diagram;
   if (typeof pre === "string") pre = document.getElementById(pre);
   var div = document.createElement("div");
-  div.style.width = w + "px";
+  div.style.width = w + "%";
   div.style.height = h + "px";
   div.className = "diagramStyling";
   var parent;
@@ -711,7 +711,7 @@ var details =
   templmap.add("details", details);
   diagram.nodeTemplateMap = templmap;
 
-  diagram.layout = $(go.ForceDirectedLayout,{ maxIterations: 200, defaultSpringLength: 30, defaultElectricalCharge: 100 });
+  diagram.layout = $(go.ForceDirectedLayout,{ maxIterations: 200, defaultSpringLength: 20, defaultElectricalCharge: 70 });
 
 diagram.model.nodeDataArray = [ ];
 diagram.model.linkDataArray = [ ];
@@ -722,7 +722,7 @@ diagram.model.linkDataArray = [ ];
 </div>
 <div>
 <table id="hosts" style="width:100%">
- <tbody>
+ <thead>
   <tr>
     <th>Network</th>
     <th>Host name</th>
@@ -737,48 +737,49 @@ diagram.model.linkDataArray = [ ];
     <th>OC CP</th>
     <th>OC Details</th>
   </tr>
+ </thead>
+ <tbody>
 TABLEDATA
- </tbody>
+  </tbody>
 </table>
 
 <script src="tablefilter/tablefilter.js"></script>
-
+<script src="sortabletable.js" language="javascript" type="text/javascript"></script>
 <script data-config>
-    var filtersConfig = {
-        base_path: '/',
-        col_0: 'select',
-        col_4: 'select',
-        col_5: 'select',
-        col_6: 'select',
-        col_7: 'select',
-        col_9: 'select',
-        alternate_rows: true,
-        rows_counter: true,
-        btn_reset: true,
-        loader: true,
-        status_bar: true,
-        mark_active_columns: true,
-        highlight_keywords: true,
-        col_types: [
-            'string',
-            'string',
-            'ipaddress',
-            'string',
-            'string',
-            'ipaddress',
-            'ipaddress',
-            'string',
-            'string',
-            'number',
-            'string',
-            'string'
-        ],
-        extensions:[{ name: 'sort' }]
-    };
-
-    var tf = new TableFilter('hosts', filtersConfig);
-    tf.init();
-</script>
+var tfConfig = {
+    rows_counter_text: 'Number of hosts: ',
+    btn_reset_text: "Clear",
+    loader: true,
+    no_results_message: true,
+    base_path: './tablefilter/',
+    col_0: 'select',
+    col_4: 'select',
+    col_5: 'select',
+    col_6: 'select',
+    col_7: 'select',
+    col_9: 'select',
+    mark_active_columns: true,
+    rows_counter: true,
+    btn_reset: true,
+    status_bar: true,
+    col_types: [
+       'string',
+       'string',
+       'ipaddress',
+       'string',
+       'string',
+       'ipaddress',
+       'ipaddress',
+       'string',
+       'string',
+       'number',
+       'string',
+       'string'
+       ],
+    extensions: [{ name: 'sort' }]
+};
+var tf = new TableFilter('hosts', tfConfig);
+tf.init();
 
 </div>
 </body>
