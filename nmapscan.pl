@@ -780,6 +780,7 @@ var tfConfig = {
 };
 var tf = new TableFilter('hosts', tfConfig);
 tf.init();
+</script>
 
 </div>
 </body>
