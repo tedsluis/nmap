@@ -744,7 +744,6 @@ TABLEDATA
 </table>
 
 <script src="tablefilter/tablefilter.js"></script>
-<script src="sortabletable.js" language="javascript" type="text/javascript"></script>
 <script data-config>
 var tfConfig = {
     rows_counter_text: 'Number of hosts: ',
@@ -776,7 +775,11 @@ var tfConfig = {
        'string',
        'string'
        ],
-    extensions: [{ name: 'sort' }]
+    extensions: [{ name: 'sort' },
+                 { name: 'colsVisibility',
+                      at_start: [0,5,9],
+                      text: 'Hide columns: ',
+                      enable_tick_all: true}]
 };
 var tf = new TableFilter('hosts', tfConfig);
 tf.init();
