@@ -417,63 +417,68 @@ foreach my $ipaddress (sort keys %subnets) {
      my @ports;
      my ($subnet,$hostname,$gateway,$subnetmask,$devicetype,$running,$mac,$vendor,$status,$latency,$hop,$os_cpe,$os_details,$fact,$port);
      $subnet= $subnets{$ipaddress};
-     $gateway=   $gateway{$subnets{$ipaddress}}  if  (exists $gateway{$subnets{$ipaddress}});
-     $subnetmask=$cidr{$subnet}{'subnetmask'}    if  (exists $cidr{$subnet});
-     $hostname=  $host{$ipaddress}{'hostname'}   if  (exists $host{$ipaddress}{'hostname'});
-     $devicetype=$host{$ipaddress}{'devicetype'} if  (exists $host{$ipaddress}{'devicetype'});
-     $running=   $host{$ipaddress}{'running'}    if  (exists $host{$ipaddress}{'running'});
-     $vendor=    $host{$ipaddress}{'vendor'}     if  (exists $host{$ipaddress}{'vendor'});
-     $status=    $host{$ipaddress}{'status'}     if  (exists $host{$ipaddress}{'status'});
-     $latency=   $host{$ipaddress}{'latency'}    if  (exists $host{$ipaddress}{'latency'});
-     $hop=       $host{$ipaddress}{'hops'}       if  (exists $host{$ipaddress}{'hops'});
-     $os_cpe=    $host{$ipaddress}{'os_cpe'}     if  (exists $host{$ipaddress}{'os_cpe'});
-     $os_details=$host{$ipaddress}{'os_details'} if  (exists $host{$ipaddress}{'os_details'});
-     $mac=       $host{$ipaddress}{'mac'}        if  (exists $host{$ipaddress}{'mac'});
-     $mac=       $hostmac{$ipaddress}            if  (exists $hostmac{$ipaddress});
-     $fact=      join("\\n",@{$fact{$ipaddress}})if ((exists $fact{$ipaddress}) && (@{$fact{$ipaddress}}));
-     $port=      join("\\n",@{$port{$ipaddress}})if ((exists $port{$ipaddress}) && (@{$port{$ipaddress}}));
+     $gateway=   $gateway{$subnets{$ipaddress}}   if  (exists $gateway{$subnets{$ipaddress}});
+     $subnetmask=$cidr{$subnet}{'subnetmask'}     if  (exists $cidr{$subnet});
+     $hostname=  $host{$ipaddress}{'hostname'}    if  (exists $host{$ipaddress}{'hostname'});
+     $devicetype=$host{$ipaddress}{'devicetype'}  if  (exists $host{$ipaddress}{'devicetype'});
+     $running=   $host{$ipaddress}{'running'}     if  (exists $host{$ipaddress}{'running'});
+     $vendor=    $host{$ipaddress}{'vendor'}      if  (exists $host{$ipaddress}{'vendor'});
+     $status=    $host{$ipaddress}{'status'}      if  (exists $host{$ipaddress}{'status'});
+     $latency=   $host{$ipaddress}{'latency'}     if  (exists $host{$ipaddress}{'latency'});
+     $hop=       $host{$ipaddress}{'hops'}        if  (exists $host{$ipaddress}{'hops'});
+     $os_cpe=    $host{$ipaddress}{'os_cpe'}      if  (exists $host{$ipaddress}{'os_cpe'});
+     $os_details=$host{$ipaddress}{'os_details'}  if  (exists $host{$ipaddress}{'os_details'});
+     $mac=       $host{$ipaddress}{'mac'}         if  (exists $host{$ipaddress}{'mac'});
+     $mac=       $hostmac{$ipaddress}             if ((exists $hostmac{$ipaddress}) && (!$mac));
+     $fact=      join("\\n",@{$fact{$ipaddress}}) if ((exists $fact{$ipaddress}) && (@{$fact{$ipaddress}}));
+     $port=      join("\\n",@{$port{$ipaddress}}) if ((exists $port{$ipaddress}) && (@{$port{$ipaddress}}));
 
      #
-     # Gather basics, details and ports
-     push(@basics, "Subnet: "     .$subnet);
-     push(@basics, "Gateway: "    .$gateway)    if ($gateway);
-     push(@basics, "Netmask: "    .$subnetmask) if ($subnetmask);
-     push(@basics, "Device type: ".$devicetype) if ($devicetype);
-     push(@basics, "Running: "    .$running)    if ($running);
-     push(@basics, "MAC: "        .$mac)        if ($mac);
-     push(@basics, "Vendor: "     .$vendor)     if ($vendor);
-     push(@details,"Status: "     .$status)     if ($status);
-     push(@details,"Latency: "    .$latency)    if ($latency);
-     push(@details,"Hops: "       .$hop)        if ($hop);
-     push(@details,"OC CPE: "     .$os_cpe)     if ($os_cpe);
-     push(@details,"OS Details: " .$os_details) if ($os_details);
-     push(@details,"Warnings: "   .$fact)       if ($fact);
-     push(@ports,                  $port)       if ($port);
+     # Gather host info 
+     my $info="";
+     $info.= $host{$ipaddress}{'os_cpe'}          if (exists $host{$ipaddress}{'os_cpe'});
+     $info.= $host{$ipaddress}{'os_details'}      if (exists $host{$ipaddress}{'os_details'});
+     $info.= $host{$ipaddress}{'vendor'}          if (exists $host{$ipaddress}{'vendor'});
+     $info.= $host{$ipaddress}{'devicetype'}      if (exists $host{$ipaddress}{'devicetype'});
 
      #
      # Determine color and hosttype
-     my $info="";
-     $info.= $host{$ipaddress}{'os_cpe'}     if (exists $host{$ipaddress}{'os_cpe'});
-     $info.= $host{$ipaddress}{'os_details'} if (exists $host{$ipaddress}{'os_details'});
-     $info.= $host{$ipaddress}{'vendor'}     if (exists $host{$ipaddress}{'vendor'});
-     $info.= $host{$ipaddress}{'devicetype'} if (exists $host{$ipaddress}{'devicetype'});
-     my $hosttype="unknown";
-     my $color=$host{$ipaddress}{'color'} || "gold";
-     ($color,$hosttype)=("tomato","unknown")      if ($info =~ /hewlett\spackard/i);
-     ($color,$hosttype)=("lightgreen","unknown")  if ($info =~ /intel/i);
-     ($color,$hosttype)=("lightsalmon","Linux")   if ($info =~ /linux/i);
-     ($color,$hosttype)=("lime","IOS")            if ($info =~ /ios|apple/i);
-     ($color,$hosttype)=("green","Android")       if ($info =~ /android|Motorola\sMobility/i);
-     ($color,$hosttype)=("dodgerblue","Windows")  if ($info =~ /windows/i);
-     ($color,$hosttype)=("chartreuse","Switch")   if ($info =~ /switch|netgear/i);
-     ($color,$hosttype)=("olivedrab","Android")   if ($info =~ /oneplus/i);
-     ($color,$hosttype)=("chocolate","Router")    if ($info =~ /router/i);
-     ($color,$hosttype)=("tomato","Printer")      if ($info =~ /printer|laserjet/i);
-     ($color,$hosttype)=("antiquewhite","NAS")    if ($info =~ /Segate\sTechnology/i);
-      $color           = "lightblue"              if ($info =~ /raspberry/i);
-      $color="orange"                             if  (exists $route{$ipaddress});
-      $color="aquamarine"                         if ((exists $gateway{$subnet}) && ($gateway{$subnet} =~ /^$ipaddress$/));
-     push(@basics, "Host type: $hosttype")        if ($hosttype);
+     my ($c,$o,$d)=(($host{$ipaddress}{'color'} || "gold"),"unknown",($devicetype||"unknown"));
+     ($c,$o)=   ("tomato","unknown")              if ($info =~ /hewlett\spackard/i);
+     ($c,$o)=   ("lightgreen","unknown")          if ($info =~ /intel/i);
+     ($c,$o)=   ("lightsalmon","Linux")           if ($info =~ /linux/i);
+     ($c,$o)=   ("lime","IOS")                    if ($info =~ /ios|apple/i);
+     ($c,$o,$d)=("green","Android","phone")       if ($info =~ /android|Motorola\sMobility/i);
+     ($c,$o)=   ("dodgerblue","Windows")          if ($info =~ /windows/i);
+     ($c,$o,$d)=("chartreuse","Linux","Switch")   if ($info =~ /switch|netgear/i);
+     ($c,$o)=   ("olivedrab","Android")           if ($info =~ /oneplus/i);
+     ($c,$o,$d)=("chocolate","Linux","Router")    if ($info =~ /router/i);
+     ($c,$o,$d)=("tomato","Linux","Printer")      if ($info =~ /printer|laserjet/i);
+     ($c,$o)=   ("antiquewhite","Linux","NAS")    if ($info =~ /Segate\sTechnology/i);
+      $c=        "lightblue"                      if ($info =~ /raspberry/i);
+      $c=        "orange"                         if  (exists $route{$ipaddress});
+      $c=        "aquamarine"                     if ((exists $gateway{$subnet}) && ($gateway{$subnet} =~ /^$ipaddress$/));
+      my $color=$c;
+      my $ostype=$o;
+      $devicetype=$d;
+      
+     #
+     # Gather basics, details and ports
+     push(@basics, "Subnet: "     .$subnet);
+     push(@basics, "Gateway: "    .$gateway)      if ($gateway);
+     push(@basics, "Netmask: "    .$subnetmask)   if ($subnetmask);
+     push(@basics, "Device type: ".$devicetype)   if ($devicetype);
+     push(@basics, "Running: "    .$running)      if ($running);
+     push(@basics, "MAC: "        .$mac)          if ($mac);
+     push(@basics, "Vendor: "     .$vendor)       if ($vendor);
+     push(@basics, "OS type: "    .$ostype)       if ($ostype);
+     push(@details,"Status: "     .$status)       if ($status);
+     push(@details,"Latency: "    .$latency)      if ($latency);
+     push(@details,"Hops: "       .$hop)          if ($hop);
+     push(@details,"OC CPE: "     .$os_cpe)       if ($os_cpe);
+     push(@details,"OS Details: " .$os_details)   if ($os_details);
+     push(@details,"Warnings: "   .$fact)         if ($fact);
+     push(@ports,                  $port)         if ($port);
 
      #
      # IP address and hostname
@@ -504,7 +509,7 @@ foreach my $ipaddress (sort keys %subnets) {
     <td>'.($subnetmask||"").'</td>
     <td>'.($gateway||"").'</td>
     <td>'.($devicetype||"").'</td>
-    <td>'.($hosttype||"").'</td>
+    <td>'.($ostype||"").'</td>
     <td>'.($running).'</td>
     <td>'.($hop||"").'</td>
     <td>'.($os_cpe).'</td>
