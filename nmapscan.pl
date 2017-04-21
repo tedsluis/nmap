@@ -96,16 +96,21 @@ if (join('',@cmd) !~ /traceroute/) {
 # Get host IP(s), interfaces and subnets
 my @data=`ip add | grep inet | grep -v inet6 | grep -v 127.0.0.1`;
 my %hostips;
+my %hostmac;
 my @cidrs;
 @cidrs=split(/,/,$cidrs) if ($cidrs);
 foreach my $hostip (@data) {
      print $hostip if ($debug);
      if ($hostip =~ /inet\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\/(\d{1,3})\s.+\s([a-z0-9\-]+)$/i) {
+          my ($ip,$netbit,$interface)=($1,$2,$3);
           # Get IP's and interface name
-          $hostips{$1}=$3;
-          print "Interface=$3 (ip=$1)\n";
+          $hostips{$ip}=$interface;
+          print "Interface=$interface (ip=$ip)\n";
           # Get networks if non were specified
-          push(@cidrs,"$1/$2") if ((!$cidrs) || (($cidrs) && ($cidrs !~ /^$1\/$2$/)));
+          push(@cidrs,"$ip/$netbit") if ((!$cidrs) || (($cidrs) && ($cidrs !~ /^$ip\/$netbit$/)));
+	  # Get mac address interface
+	  my @mac=`ifconfig $interface | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}'`;
+	  $hostmac{$ip}=$mac[0] if ($mac[0]=~ /([0-9a-f]{2}:)+/i);
      }
 }
 
@@ -265,7 +270,7 @@ sub TraceRoute(@) {
 # Scan subnets 
 foreach my $subnet (@subnets) {
      print "~~~~~~~~~~~~~~~~~ Start scanning SUBNET=$subnet ~~~~~~~~~~~~~~~~~\n" if ($debug);
-     my @data=`nmap -O -n $subnet`;
+     my @data=`nmap -A -n $subnet`;
      my $ipaddress="unknown";
      # Parse scan output
      foreach my $line (@data) {
@@ -354,9 +359,10 @@ foreach my $subnet (@subnets) {
                push(@{$fact{$ipaddress}},"$1.");
                print "NO EXACT OS MATCHES=$1\n" if ($debug);
                next;
-          } elsif ($line =~ /^(\d+.+\s+.+\s+.+)$/i) {
-               push(@{$port{$ipaddress}},"$1.");
-               print "PORT=$1\n" if ($debug);
+          } elsif ($line =~ /^(\d+\/[tu][cd]p)\s+([^\s]+)\s+([^\s]+)\s*(.*)$/i) {
+               my $port=sprintf("%-9s %-6s %-10s %-50s",$1,$2,$3,($4||""));
+               push(@{$port{$ipaddress}},"$port.");
+               print "PORT=$port\n" if ($debug);
           } else {
                print "NOT PARSED! >>>$line<<<\n" if ($debug);
           }
@@ -416,16 +422,19 @@ foreach my $ipaddress (sort keys %subnets) {
      $hostname=  $host{$ipaddress}{'hostname'}   if  (exists $host{$ipaddress}{'hostname'});
      $devicetype=$host{$ipaddress}{'devicetype'} if  (exists $host{$ipaddress}{'devicetype'});
      $running=   $host{$ipaddress}{'running'}    if  (exists $host{$ipaddress}{'running'});
-     $mac=       $host{$ipaddress}{'mac'}        if  (exists $host{$ipaddress}{'mac'});
      $vendor=    $host{$ipaddress}{'vendor'}     if  (exists $host{$ipaddress}{'vendor'});
      $status=    $host{$ipaddress}{'status'}     if  (exists $host{$ipaddress}{'status'});
      $latency=   $host{$ipaddress}{'latency'}    if  (exists $host{$ipaddress}{'latency'});
      $hop=       $host{$ipaddress}{'hops'}       if  (exists $host{$ipaddress}{'hops'});
      $os_cpe=    $host{$ipaddress}{'os_cpe'}     if  (exists $host{$ipaddress}{'os_cpe'});
      $os_details=$host{$ipaddress}{'os_details'} if  (exists $host{$ipaddress}{'os_details'});
+     $mac=       $host{$ipaddress}{'mac'}        if  (exists $host{$ipaddress}{'mac'});
+     $mac=       $hostmac{$ipaddress}            if  (exists $hostmac{$ipaddress});
      $fact=      join("\\n",@{$fact{$ipaddress}})if ((exists $fact{$ipaddress}) && (@{$fact{$ipaddress}}));
      $port=      join("\\n",@{$port{$ipaddress}})if ((exists $port{$ipaddress}) && (@{$port{$ipaddress}}));
 
+     #
+     # Gather basics, details and ports
      push(@basics, "Subnet: "     .$subnet);
      push(@basics, "Gateway: "    .$gateway)    if ($gateway);
      push(@basics, "Netmask: "    .$subnetmask) if ($subnetmask);
@@ -441,33 +450,51 @@ foreach my $ipaddress (sort keys %subnets) {
      push(@details,"Warnings: "   .$fact)       if ($fact);
      push(@ports,                  $port)       if ($port);
 
+     #
+     # Determine color and hosttype
+     my $info="";
+     $info.= $host{$ipaddress}{'os_cpe'}     if (exists $host{$ipaddress}{'os_cpe'});
+     $info.= $host{$ipaddress}{'os_details'} if (exists $host{$ipaddress}{'os_details'});
+     $info.= $host{$ipaddress}{'vendor'}     if (exists $host{$ipaddress}{'vendor'});
+     $info.= $host{$ipaddress}{'devicetype'} if (exists $host{$ipaddress}{'devicetype'});
+     my $hosttype="unknown";
      my $color=$host{$ipaddress}{'color'} || "gold";
-     $color="lightsalmon" if ((exists $host{$ipaddress}{'os_cpe'})     && ($host{$ipaddress}{'os_cpe'}     =~ /linux/i));
-     $color="lime"        if ((exists $host{$ipaddress}{'vendor'})     && ($host{$ipaddress}{'vendor'}     =~ /apple/i));
-     $color="lightblue"   if ((exists $host{$ipaddress}{'vendor'})     && ($host{$ipaddress}{'vendor'}     =~ /raspberry/i));
-     $color="lightgreen"  if ((exists $host{$ipaddress}{'vendor'})     && ($host{$ipaddress}{'vendor'}     =~ /intel/i));
-     $color="chartreuse"  if ((exists $host{$ipaddress}{'vendor'})     && ($host{$ipaddress}{'vendor'}     =~ /netgear/i));
-     $color="chartreuse"  if ((exists $host{$ipaddress}{'devicetype'}) && ($host{$ipaddress}{'devicetype'} =~ /switch/i));
-     $color="tomato"      if ((exists $host{$ipaddress}{'vendor'})     && ($host{$ipaddress}{'vendor'}     =~ /hewlett\spackard/i));
-     $color="green"       if ((exists $host{$ipaddress}{'vendor'})     && ($host{$ipaddress}{'vendor'}     =~ /motorola/i));
-     $color="dodgerblue"  if ((exists $host{$ipaddress}{'os_details'}) && ($host{$ipaddress}{'os_details'} =~ /windows/i));
-     $color="olivedrab"   if ((exists $host{$ipaddress}{'vendor'})     && ($host{$ipaddress}{'vendor'}     =~ /OnePlus/i));
-     $color="orange"      if  (exists $route{$ipaddress});
-     $color="aquamarine"  if ((exists $gateway{$subnet}) && ($gateway{$subnet} =~ /^$ipaddress$/));
+     ($color,$hosttype)=("tomato","unknown")      if ($info =~ /hewlett\spackard/i);
+     ($color,$hosttype)=("lightgreen","unknown")  if ($info =~ /intel/i);
+     ($color,$hosttype)=("lightsalmon","Linux")   if ($info =~ /linux/i);
+     ($color,$hosttype)=("lime","IOS")            if ($info =~ /ios|apple/i);
+     ($color,$hosttype)=("green","Android")       if ($info =~ /android|Motorola\sMobility/i);
+     ($color,$hosttype)=("dodgerblue","Windows")  if ($info =~ /windows/i);
+     ($color,$hosttype)=("chartreuse","Switch")   if ($info =~ /switch|netgear/i);
+     ($color,$hosttype)=("olivedrab","Android")   if ($info =~ /oneplus/i);
+     ($color,$hosttype)=("chocolate","Router")    if ($info =~ /router/i);
+     ($color,$hosttype)=("tomato","Printer")      if ($info =~ /printer|laserjet/i);
+     ($color,$hosttype)=("antiquewhite","NAS")    if ($info =~ /Segate\sTechnology/i);
+      $color           = "lightblue"              if ($info =~ /raspberry/i);
+      $color="orange"                             if  (exists $route{$ipaddress});
+      $color="aquamarine"                         if ((exists $gateway{$subnet}) && ($gateway{$subnet} =~ /^$ipaddress$/));
+     push(@basics, "Host type: $hosttype")        if ($hosttype);
+
+     #
+     # IP address and hostname
      my $name=NAME($ipaddress);
+
      # 
      # Save host objects
      push(@nodes,"{ key:  \"${name}\", basics: \"".join("\\n",@basics)."\", details: \"".join("\\n",@details)."\",ports: \"".join("\\n",@ports)."\", color: \"$color\", category: \"name\" }");
+
      #
      # Save links between hostobjects
      if ((exists $gateway{$subnets{$ipaddress}}) && (NAME($gateway{$subnets{$ipaddress}}) !~ /^${name}$/)) {
           push(@links,"{ from: \"${name}\", to: \"".NAME($gateway{$subnets{$ipaddress}})."\" }");
      }
+
      #
      # Remove double words
      $os_cpe =~ s/(\b\S{4,30})(.+)\1/${1}${2}\//i;
+
      # 
-     # construct table row
+     # construct html table row
      $tabledata.='  <tr bgcolor="'.$color.'">
     <td>'.($subnet||"").'</td>
     <td>'.($hostname||"").'</td>
@@ -477,6 +504,7 @@ foreach my $ipaddress (sort keys %subnets) {
     <td>'.($subnetmask||"").'</td>
     <td>'.($gateway||"").'</td>
     <td>'.($devicetype||"").'</td>
+    <td>'.($hosttype||"").'</td>
     <td>'.($running).'</td>
     <td>'.($hop||"").'</td>
     <td>'.($os_cpe).'</td>
@@ -518,7 +546,7 @@ while( <DATA> )
      # Insert host data and links
      s/^\s*diagram\.model\.nodeDataArray\s=\s\[.+$/${node}/g;
      s/^\s*diagram\.model\.linkDataArray\s=\s\[.+$/${link}/g;
-     s/^TABLEDATA/${tabledata}/;
+     s/^INSERTTABLEDATA/${tabledata}/;
      print $out $_;
 }
 
@@ -702,8 +730,6 @@ var details =
           { click: function(e, obj) { changeCategory(obj,'name');} })
     );
 
-
-
   var templmap = new go.Map("string", go.Node);
   templmap.add("name", name);
   templmap.add("basics", basics);
@@ -711,12 +737,12 @@ var details =
   templmap.add("details", details);
   diagram.nodeTemplateMap = templmap;
 
-  diagram.layout = $(go.ForceDirectedLayout,{ maxIterations: 200, defaultSpringLength: 20, defaultElectricalCharge: 70 });
+  diagram.layout = $(go.ForceDirectedLayout,{ maxIterations: 200, defaultSpringLength: 20, defaultElectricalCharge: 80 });
 
 diagram.model.nodeDataArray = [ ];
 diagram.model.linkDataArray = [ ];
 </script>
-<script>goCode("changingCategory", 1900, 1080)</script>
+<script>goCode("changingCategory", 100, 600)</script>
 
 
 </div>
@@ -732,6 +758,7 @@ diagram.model.linkDataArray = [ ];
     <th>Netmask</th>
     <th>Gateway</th>
     <th>Device type</th>
+    <th>Host type</th>
     <th>Running</th>
     <th>Hops</th>
     <th>OC CP</th>
@@ -739,7 +766,7 @@ diagram.model.linkDataArray = [ ];
   </tr>
  </thead>
  <tbody>
-TABLEDATA
+INSERTTABLEDATA
   </tbody>
 </table>
 
@@ -756,12 +783,13 @@ var tfConfig = {
     col_5: 'select',
     col_6: 'select',
     col_7: 'select',
-    col_9: 'select',
+    col_8: 'select',
+    col_10:'select',
     mark_active_columns: true,
     rows_counter: true,
     btn_reset: true,
     status_bar: true,
-    col_widths: ["120px","120px","120px","180px","120px","120px","150px","150px","10%","30px","10%","10%"],
+    col_widths: ["120px","120px","120px","180px","120px","120px","150px","150px","100px","10%","30px","10%","10%"],
     col_types: [
        'string',
        'string',
@@ -778,7 +806,7 @@ var tfConfig = {
        ],
     extensions: [{ name: 'sort' },
                  { name: 'colsVisibility',
-                      at_start: [0,5,9],
+                      at_start: [0,5,11,12,13],
                       text: 'Hide columns: ',
                       enable_tick_all: true}]
 };
