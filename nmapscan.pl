@@ -761,6 +761,7 @@ var tfConfig = {
     rows_counter: true,
     btn_reset: true,
     status_bar: true,
+    col_widths: ["120px","120px","120px","180px","120px","120px","150px","150px","10%","30px","10%","10%"],
     col_types: [
        'string',
        'string',
