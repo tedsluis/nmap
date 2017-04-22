@@ -110,7 +110,7 @@ foreach my $hostip (@data) {
           push(@cidrs,"$ip/$netbit") if ((!$cidrs) || (($cidrs) && ($cidrs !~ /^$ip\/$netbit$/)));
 	  # Get mac address interface
 	  my @mac=`ifconfig $interface | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}'`;
-	  $hostmac{$ip}=$mac[0] if ($mac[0]=~ /([0-9a-f]{2}:)+/i);
+	  $hostmac{$ip}=chomp($mac[0]) if ($mac[0]=~ /([0-9a-f]{2}:)+/i);
      }
 }
 
