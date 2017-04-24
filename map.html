@@ -97,7 +97,7 @@ function _traverseDOM(node) {
           { defaultAlignment: go.Spot.Left },
           $(go.TextBlock, { row: 0, column: 0, columnSpan: 2, font: "bold 10pt sans-serif" },
             new go.Binding("text", "key")),
-          $(go.TextBlock, { row: 1, column: 0 }, "Basics:"),
+          $(go.TextBlock, { row: 1, column: 0, font: "bold 10pt sans-serif" }, "Basics:"),
           $(go.TextBlock, { row: 1, column: 1 }, new go.Binding("text", "basics"))
         )
       ),
@@ -124,8 +124,8 @@ function _traverseDOM(node) {
           { defaultAlignment: go.Spot.Left },
           $(go.TextBlock, { row: 0, column: 0, columnSpan: 2, font: "bold 10pt sans-serif" },
             new go.Binding("text", "key")),
-          $(go.TextBlock, { row: 1, column: 0 }, "ports:"),
-          $(go.TextBlock, { row: 1, column: 1 }, new go.Binding("text", "ports"))
+          $(go.TextBlock, { row: 1, column: 0, font: "bold 10pt sans-serif" }, "ports:"),
+          $(go.TextBlock, { row: 1, column: 1,font: "10pt monospace" }, new go.Binding("text", "ports"))
         )
       ),
       $("Button",
@@ -151,7 +151,7 @@ var details =
           { defaultAlignment: go.Spot.Left },
           $(go.TextBlock, { row: 0, column: 0, columnSpan: 2, font: "bold 10pt sans-serif" },
             new go.Binding("text", "key")),
-          $(go.TextBlock, { row: 1, column: 0 }, "Details:"),
+          $(go.TextBlock, { row: 1, column: 0, font: "bold 10pt sans-serif" }, "Details:"),
           $(go.TextBlock, { row: 1, column: 1 }, new go.Binding("text", "details"))
         )
       ),
@@ -169,8 +169,6 @@ var details =
           { click: function(e, obj) { changeCategory(obj,'name');} })
     );
 
-
-
   var templmap = new go.Map("string", go.Node);
   templmap.add("name", name);
   templmap.add("basics", basics);
@@ -178,12 +176,12 @@ var details =
   templmap.add("details", details);
   diagram.nodeTemplateMap = templmap;
 
-  diagram.layout = $(go.ForceDirectedLayout,{ maxIterations: 200, defaultSpringLength: 20, defaultElectricalCharge: 70 });
+  diagram.layout = $(go.ForceDirectedLayout,{ maxIterations: 200, defaultSpringLength: 20, defaultElectricalCharge: 80 });
 
-diagram.model.nodeDataArray = [{ key:  "192.168.1.10", basics: "Subnet: 192.168.1.0/24\nGateway: 192.168.1.254\nNetmask: 255.255.255.0\nDevice type: webcam|media device|printer|WAP\nRunning: (JUST GUESSING): Leica embedded (93%), Frontier Silicon embedded (93%), Canon embedded (90%), Novatel embedded (89%), Olympus embedded (89%), iDirect embedded (86%)", details: "Status: up\nLatency: 0.055s latency\nHops: 55\nOC CPE: cpe:/h:canon:imageclass_mf212w cpe:/h:novatel:mifi_4620l cpe:/h:olympus:stylus_sh-2\nWarnings: Leica T camera (93%), Frontier Silicon internet radio (93%), Canon imageCLASS MF212w printer (90%), Novatel MiFi 4620L WAP (89%), Olympus Stylus SH-2 camera (89%), Novatel MiFi 2200 3G WAP or iDirect Evolution X1 satellite router (86%)\nNo exact OS matches for host (test conditions non-ideal)..",ports: "996 closed ports\n80/tcp    open  http.\n514/tcp   open  shell.\n8080/tcp  open  http-proxy.\n10003/tcp open  documentum_s.", color: "gold", category: "name" },{ key:  "192.168.1.118", basics: "Subnet: 192.168.1.0/24\nGateway: 192.168.1.254\nNetmask: 255.255.255.0", details: "",ports: "", color: "gold", category: "name" },{ key:  "192.168.1.13", basics: "Subnet: 192.168.1.0/24\nGateway: 192.168.1.254\nNetmask: 255.255.255.0\nDevice type: WAP\nRunning: Linux 2.6.X", details: "Status: up\nLatency: 0.0050s latency\nHops: 2\nOC CPE: cpe:/o:linux:linux_kernel:2.6.22\nOS Details: Tomato 1.28 (Linux 2.6.22).",ports: "998 closed ports\n139/tcp open  netbios-ssn.\n445/tcp open  microsoft-ds.", color: "lightsalmon", category: "name" },{ key:  "192.168.1.21", basics: "Subnet: 192.168.1.0/24\nGateway: 192.168.1.254\nNetmask: 255.255.255.0", details: "Status: up\nLatency: 0.0021s latency\nWarnings: No exact OS matches for host (If you know what OS is running on it, see https://nmap.org/submit/ )..",ports: "999 closed ports\n80/tcp open  http.", color: "gold", category: "name" },{ key:  "192.168.1.22", basics: "Subnet: 192.168.1.0/24\nGateway: 192.168.1.254\nNetmask: 255.255.255.0\nDevice type: general purpose\nRunning: Linux 3.X", details: "Status: up\nLatency: 0.0094s latency\nHops: 2\nOC CPE: cpe:/o:linux:linux_kernel:3\nOS Details: Linux 3.2 - 3.8.",ports: "994 closed ports\n7676/tcp open  imqbrokerd.\n8000/tcp open  http-alt.\n8001/tcp open  vcom-tunnel.\n8002/tcp open  teradataordbms.\n8080/tcp open  http-proxy.\n9999/tcp open  abyss.", color: "lightsalmon", category: "name" },{ key:  "ZIGGO-ROUTER, 192.168.1.254", basics: "Subnet: 192.168.1.0/24\nGateway: 192.168.1.254\nNetmask: 255.255.255.0\nDevice type: broadband router\nRunning: eCosCentric eCos 2.X, Cisco embedded, Motorola embedded, Scientific Atlanta embedded", details: "Status: up\nLatency: 0.0059s latency\nHops: 2\nOC CPE: cpe:/o:ecoscentric:ecos:2.0 cpe:/h:cisco:epc3925 cpe:/h:cisco:dpc2320 cpe:/h:motorola:sb5101e cpe:/h:scientific_atlanta:epc2203\nOS Details: Cisco EPC3925, DPC2320, Motorola SURFboard SB5101E, or Scientific Atlanta EPC2203 cable modem (eCos 2.0).",ports: "997 closed ports\n80/tcp   open  http.\n1900/tcp open  upnp.\n8080/tcp open  http-proxy.", color: "aquamarine", category: "name" },{ key:  "RB750-WAN, 192.168.1.31", basics: "Subnet: 192.168.1.0/24\nGateway: 192.168.1.254\nNetmask: 255.255.255.0\nDevice type: general purpose\nRunning: Linux 2.6.X|3.X", details: "Status: up\nLatency: 0.0041s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:2.6 cpe:/o:linux:linux_kernel:3\nOS Details: Linux 2.6.32 - 3.10.",ports: "993 closed ports\n21/tcp   open  ftp.\n22/tcp   open  ssh.\n23/tcp   open  telnet.\n53/tcp   open  domain.\n80/tcp   open  http.\n2000/tcp open  cisco-sccp.\n8291/tcp open  unknown.", color: "orange", category: "name" },{ key:  "RB750, 192.168.11.1", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: general purpose\nRunning: Linux 2.6.X|3.X\nMAC: 6C:3B:6B:C7:01:8E\nVendor: Routerboard.com", details: "Status: up\nLatency: 0.0035s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:2.6 cpe:/o:linux:linux_kernel:3\nOS Details: Linux 2.6.32 - 3.10.",ports: "993 closed ports\n21/tcp   open  ftp.\n22/tcp   open  ssh.\n23/tcp   open  telnet.\n53/tcp   open  domain.\n80/tcp   open  http.\n2000/tcp open  cisco-sccp.\n8291/tcp open  unknown.", color: "aquamarine", category: "name" },{ key:  "P4015N, 192.168.11.104", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: printer\nRunning: HP embedded\nMAC: 3C:D9:2B:0F:B1:B1\nVendor: Hewlett Packard", details: "Status: up\nLatency: 0.0036s latency\nHops: 1\nOS Details: HP LaserJet 2055dn, 2420, P3005, CP4005, 4250, P4014, or P4015 printer.",ports: "992 closed ports\n21/tcp    open  ftp.\n80/tcp    open  http.\n280/tcp   open  http-mgmt.\n443/tcp   open  https.\n515/tcp   open  printer.\n631/tcp   open  ipp.\n9100/tcp  open  jetdirect.\n14000/tcp open  scotty-ft.", color: "tomato", category: "name" },{ key:  "192.168.11.162", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nMAC: E0:98:61:79:33:2E\nVendor: Motorola Mobility, a Lenovo Company", details: "Status: up\nLatency: 0.0058s latency\nHops: 1\nWarnings: Too many fingerprints match this host to give specific OS details.",ports: "All 1000 scanned ports are closed", color: "green", category: "name" },{ key:  "192.168.11.167", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0", details: "Status: up\nLatency: 0.000079s latency\nWarnings: No exact OS matches for host (If you know what OS is running on it, see https://nmap.org/submit/ )..",ports: "999 closed ports\n111/tcp open  rpcbind.", color: "gold", category: "name" },{ key:  "PERSONALCLOUD, 192.168.11.169", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: general purpose\nRunning: Linux 3.X\nMAC: 00:10:75:57:40:0B\nVendor: Segate Technology", details: "Status: up\nLatency: 0.0042s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:3\nOS Details: Linux 3.2 - 3.16.",ports: "995 closed ports\n80/tcp   open  http.\n139/tcp  open  netbios-ssn.\n443/tcp  open  https.\n445/tcp  open  microsoft-ds.\n9000/tcp open  cslistener.", color: "lightsalmon", category: "name" },{ key:  "TED1090-3, 192.168.11.171", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: general purpose\nRunning: Linux 3.X|4.X\nMAC: B8:27:EB:F7:69:67\nVendor: Raspberry Pi Foundation", details: "Status: up\nLatency: 0.0043s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:3 cpe:/o:linux:linux_kernel:4\nOS Details: Linux 3.2 - 4.6.",ports: "998 closed ports\n22/tcp open  ssh.\n80/tcp open  http.", color: "lightblue", category: "name" },{ key:  "TED1090-1, 192.168.11.172", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: general purpose\nRunning: Linux 3.X|4.X\nMAC: B8:27:EB:90:86:E0\nVendor: Raspberry Pi Foundation", details: "Status: up\nLatency: 0.0044s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:3 cpe:/o:linux:linux_kernel:4\nOS Details: Linux 3.2 - 4.6.",ports: "998 closed ports\n22/tcp open  ssh.\n80/tcp open  http.", color: "lightblue", category: "name" },{ key:  "TED1090-5, 192.168.11.174", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: general purpose\nRunning: Linux 3.X|4.X\nMAC: B8:27:EB:DE:54:F0\nVendor: Raspberry Pi Foundation", details: "Status: up\nLatency: 0.0043s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:3 cpe:/o:linux:linux_kernel:4\nOS Details: Linux 3.2 - 4.6.",ports: "998 closed ports\n22/tcp open  ssh.\n80/tcp open  http.", color: "lightblue", category: "name" },{ key:  "TED1090-6, 192.168.11.175", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: general purpose\nRunning: Linux 3.X\nMAC: 2E:DC:54:46:0C:DC\nVendor: Unknown", details: "Status: up\nLatency: 0.0043s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:3\nOS Details: Linux 3.2 - 3.16.",ports: "998 closed ports\n22/tcp open  ssh.\n80/tcp open  http.", color: "lightsalmon", category: "name" },{ key:  "TED1090-2, 192.168.11.176", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: general purpose\nRunning: Linux 3.X|4.X\nMAC: B8:27:EB:7F:16:13\nVendor: Raspberry Pi Foundation", details: "Status: up\nLatency: 0.0046s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:3 cpe:/o:linux:linux_kernel:4\nOS Details: Linux 3.2 - 4.6.",ports: "998 closed ports\n22/tcp open  ssh.\n80/tcp open  http.", color: "lightblue", category: "name" },{ key:  "TED1090-7, 192.168.11.177", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: general purpose\nRunning: Linux 3.X\nMAC: 26:0F:0A:3D:79:DC\nVendor: Unknown", details: "Status: up\nLatency: 0.0044s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:3\nOS Details: Linux 3.2 - 3.16.",ports: "998 closed ports\n22/tcp open  ssh.\n80/tcp open  http.", color: "lightsalmon", category: "name" },{ key:  "TED1090-4, 192.168.11.178", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: general purpose\nRunning: Linux 3.X|4.X\nMAC: B8:27:EB:79:B3:10\nVendor: Raspberry Pi Foundation", details: "Status: up\nLatency: 0.0032s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:3 cpe:/o:linux:linux_kernel:4\nOS Details: Linux 3.2 - 4.6.",ports: "998 closed ports\n22/tcp open  ssh.\n80/tcp open  http.", color: "lightblue", category: "name" },{ key:  "192.168.11.184", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nMAC: A4:D1:D2:7B:64:B2\nVendor: Apple", details: "Status: up\nLatency: 0.066s latency\nHops: 1\nOS Details: Apple Mac OS X 10.7.0 (Lion) - 10.11 (El Capitan) or iOS 4.1 - 9.3.3 (Darwin 10.0.0 - 15.6.0).",ports: "999 closed ports\n62078/tcp open  iphone-sync.", color: "lime", category: "name" },{ key:  "192.168.11.185", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nMAC: C0:BD:D1:88:45:26\nVendor: Samsung Electro-mechanics(thailand)", details: "Status: up\nLatency: 0.032s latency\nHops: 1\nWarnings: Too many fingerprints match this host to give specific OS details.",ports: "All 1000 scanned ports are closed", color: "gold", category: "name" },{ key:  "192.168.11.187", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: general purpose\nRunning: Linux 2.6.X|3.X\nMAC: 00:E0:4C:36:4F:BA\nVendor: Realtek Semiconductor", details: "Status: up\nLatency: 0.0034s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:2.6 cpe:/o:linux:linux_kernel:3\nOS Details: Linux 2.6.32 - 3.10.",ports: "998 closed ports\n8008/tcp open  http.\n8009/tcp open  ajp13.", color: "lightsalmon", category: "name" },{ key:  "GS724T, 192.168.11.200", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: switch\nRunning: Netgear embedded\nMAC: A0:04:60:26:28:CE\nVendor: Netgear", details: "Status: up\nLatency: 0.0040s latency\nHops: 1\nOS Details: Netgear GS700T-series switch.",ports: "998 closed ports\n80/tcp   open  http.\n4242/tcp open  vrml-multi-use.", color: "chartreuse", category: "name" },{ key:  "WNDAP660, 192.168.11.201", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: general purpose\nRunning: Linux 2.6.X\nMAC: 04:A1:51:52:BF:C8\nVendor: Netgear", details: "Status: up\nLatency: 0.0031s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:2.6\nOS Details: Linux 2.6.17 - 2.6.36.",ports: "997 closed ports\n22/tcp  open  ssh.\n80/tcp  open  http.\n443/tcp open  https.", color: "chartreuse", category: "name" },{ key:  "NASTED, 192.168.11.38", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: general purpose\nRunning: Linux 2.6.X|3.X\nMAC: 00:08:9B:C6:10:24\nVendor: ICP Electronics", details: "Status: up\nLatency: 0.0025s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:2.6 cpe:/o:linux:linux_kernel:3\nOS Details: Linux 2.6.32 - 3.10.",ports: "986 closed ports\n21/tcp    open  ftp.\n22/tcp    open  ssh.\n80/tcp    open  http.\n111/tcp   open  rpcbind.\n139/tcp   open  netbios-ssn.\n443/tcp   open  https.\n445/tcp   open  microsoft-ds.\n631/tcp   open  ipp.\n873/tcp   open  rsync.\n2049/tcp  open  nfs.\n8080/tcp  open  http-proxy.\n8800/tcp  open  sunwebadmin.\n9090/tcp  open  zeus-admin.\n30000/tcp open  ndmps.", color: "lightsalmon", category: "name" },{ key:  "MSI, 192.168.11.80", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: general purpose\nRunning: Linux 3.X|4.X\nMAC: D4:3D:7E:4E:29:83\nVendor: Micro-Star Int'l", details: "Status: up\nLatency: 0.0034s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:3 cpe:/o:linux:linux_kernel:4\nOS Details: Linux 3.10 - 4.2.",ports: "845 closed ports, 154 filtered ports\n22/tcp open  ssh.", color: "lightsalmon", category: "name" },{ key:  "192.168.11.97", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0", details: "",ports: "", color: "gold", category: "name" },{ key:  "192.168.122.1", basics: "Subnet: 192.168.122.0/24\nGateway: 192.168.11.167\nNetmask: 255.255.255.0", details: "Status: up\nLatency: 0.000062s latency\nWarnings: No exact OS matches for host (If you know what OS is running on it, see https://nmap.org/submit/ )..",ports: "998 closed ports\n53/tcp  open  domain.\n111/tcp open  rpcbind.", color: "gold", category: "name" },{ key:  "Internet Gateway", basics: "Hops:[rb750 (192.168.11.1)]\n[ziggo-router (192.168.1.254)]\n[mnd-rc0001-cr101-xe-0-1-2-0.core.as9143.net (213.51.190.81)]\n[84.116.135.37 (84.116.135.37)]\n[84.116.135.38 (84.116.135.38)]\n[74.125.146.228 (74.125.146.228)]\n[108.170.241.194 (108.170.241.194)]\n[216.239.43.120 (216.239.43.120)]\n[108.170.232.72 (108.170.232.72)]\n[108.170.237.131 (108.170.237.131)]\n[google-public-dns-a.google.com (8.8.8.8)]", details: "[rb750 (192.168.11.1)]--->[ziggo-router (192.168.1.254)]--->[mnd-rc0001-cr101-xe-0-1-2-0.core.as9143.net (213.51.190.81)]--->[84.116.135.37 (84.116.135.37)]--->[84.116.135.38 (84.116.135.38)]--->[74.125.146.228 (74.125.146.228)]--->[108.170.241.194 (108.170.241.194)]--->[216.239.43.120 (216.239.43.120)]--->[108.170.232.72 (108.170.232.72)]--->[108.170.237.131 (108.170.237.131)]--->[google-public-dns-a.google.com (8.8.8.8)]",ports: "*any*", color: "yellow", category: "name" }];
-diagram.model.linkDataArray = [{ from: "192.168.1.10", to: "ZIGGO-ROUTER, 192.168.1.254" },{ from: "192.168.1.118", to: "ZIGGO-ROUTER, 192.168.1.254" },{ from: "192.168.1.13", to: "ZIGGO-ROUTER, 192.168.1.254" },{ from: "192.168.1.21", to: "ZIGGO-ROUTER, 192.168.1.254" },{ from: "192.168.1.22", to: "ZIGGO-ROUTER, 192.168.1.254" },{ from: "RB750-WAN, 192.168.1.31", to: "ZIGGO-ROUTER, 192.168.1.254" },{ from: "P4015N, 192.168.11.104", to: "RB750, 192.168.11.1" },{ from: "192.168.11.162", to: "RB750, 192.168.11.1" },{ from: "192.168.11.167", to: "RB750, 192.168.11.1" },{ from: "PERSONALCLOUD, 192.168.11.169", to: "RB750, 192.168.11.1" },{ from: "TED1090-3, 192.168.11.171", to: "RB750, 192.168.11.1" },{ from: "TED1090-1, 192.168.11.172", to: "RB750, 192.168.11.1" },{ from: "TED1090-5, 192.168.11.174", to: "RB750, 192.168.11.1" },{ from: "TED1090-6, 192.168.11.175", to: "RB750, 192.168.11.1" },{ from: "TED1090-2, 192.168.11.176", to: "RB750, 192.168.11.1" },{ from: "TED1090-7, 192.168.11.177", to: "RB750, 192.168.11.1" },{ from: "TED1090-4, 192.168.11.178", to: "RB750, 192.168.11.1" },{ from: "192.168.11.184", to: "RB750, 192.168.11.1" },{ from: "192.168.11.185", to: "RB750, 192.168.11.1" },{ from: "192.168.11.187", to: "RB750, 192.168.11.1" },{ from: "GS724T, 192.168.11.200", to: "RB750, 192.168.11.1" },{ from: "WNDAP660, 192.168.11.201", to: "RB750, 192.168.11.1" },{ from: "NASTED, 192.168.11.38", to: "RB750, 192.168.11.1" },{ from: "MSI, 192.168.11.80", to: "RB750, 192.168.11.1" },{ from: "192.168.11.97", to: "RB750, 192.168.11.1" },{ from: "192.168.122.1", to: "192.168.11.167" },{ from: "ZIGGO-ROUTER, 192.168.1.254", to: "Internet Gateway" },{ from: "RB750, 192.168.11.1", to: "RB750-WAN, 192.168.1.31" }];
+diagram.model.nodeDataArray = [{ key:  "INTERNET-RADIO, 192.168.1.10", basics: "Subnet: 192.168.1.0/24\nGateway: 192.168.1.254\nNetmask: 255.255.255.0\nDevice type: unknown\nOS type: unknown", details: "Status: up\nLatency: 0.034s latency\nWarnings: Too many fingerprints match this host to give specific OS details.",ports: "All 1000 scanned ports are filtered (894) or closed (106)", color: "gold", category: "name" },{ key:  "SAMBA, 192.168.1.13", basics: "Subnet: 192.168.1.0/24\nGateway: 192.168.1.254\nNetmask: 255.255.255.0\nDevice type: WAP\nRunning: Linux 2.6.X\nOS type: Linux", details: "Status: up\nLatency: 0.0026s latency\nHops: 2\nOC CPE: cpe:/o:linux:linux_kernel:2.6.22\nOS Details: Tomato 1.28 (Linux 2.6.22).",ports: "998 closed ports\n139/tcp   open     netbios-ssn    Samba smbd 3.X - 4.X (workgroup: WORKGROUP).\n445/tcp   open     netbios-ssn    Samba smbd 3.0.37 (workgroup: WORKGROUP).", color: "lightsalmon", category: "name" },{ key:  "192.168.1.207", basics: "Subnet: 192.168.1.0/24\nGateway: 192.168.1.254\nNetmask: 255.255.255.0\nDevice type: unknown\nOS type: unknown", details: "",ports: "", color: "gold", category: "name" },{ key:  "PHILIPS-HUE-BRIDGE, 192.168.1.21", basics: "Subnet: 192.168.1.0/24\nGateway: 192.168.1.254\nNetmask: 255.255.255.0\nDevice type: bridge\nRunning: philips hue bridge \nOS type: Linux", details: "Status: up\nLatency: 0.00045s latency\nWarnings: No exact OS matches for host (If you know what OS is running on it, see https://nmap.org/submit/ )..",ports: "999 closed ports\n80/tcp    open     http           Philips Hue wireless lighting bridge.", color: "sienna", category: "name" },{ key:  "SAMSUNGTV, 192.168.1.22", basics: "Subnet: 192.168.1.0/24\nGateway: 192.168.1.254\nNetmask: 255.255.255.0\nDevice type: general purpose\nRunning: samsung tv Linux 3.X\nOS type: Linux", details: "Status: up\nLatency: 0.0056s latency\nHops: 2\nOC CPE: cpe:/o:linux:linux_kernel:3\nOS Details: Linux 3.2 - 3.8.",ports: "993 closed ports\n7676/tcp  open     upnp           Samsung AllShare upnpd 1.0 (UPnP 1.1).\n8000/tcp  open     http-alt.\n8001/tcp  open     vcom-tunnel?.\n8002/tcp  open     ssl/teradataordbms?.\n8080/tcp  open     http           lighttpd.\n9080/tcp  open     http           Mongoose httpd.\n9999/tcp  open     abyss?.", color: "yellowgreen", category: "name" },{ key:  "192.168.1.23", basics: "Subnet: 192.168.1.0/24\nGateway: 192.168.1.254\nNetmask: 255.255.255.0\nDevice type: unknown\nOS type: unknown", details: "Status: up\nLatency: 0.10s latency\nHops: 2\nWarnings: Too many fingerprints match this host to give specific OS details.",ports: "All 1000 scanned ports are closed", color: "gold", category: "name" },{ key:  "ZIGGO-ROUTER, 192.168.1.254", basics: "Subnet: 192.168.1.0/24\nGateway: 192.168.1.254\nNetmask: 255.255.255.0\nDevice type: router\nRunning: eCosCentric eCos 2.X, Cisco embedded, Motorola embedded, Scientific Atlanta embedded\nOS type: Linux", details: "Status: up\nLatency: 0.0013s latency\nHops: 2\nOC CPE: cpe:/o:ecoscentric:ecos:2.0 cpe:/h:cisco:epc3925 cpe:/h:cisco:dpc2320 cpe:/h:motorola:sb5101e cpe:/h:scientific_atlanta:epc2203\nOS Details: Cisco EPC3925, DPC2320, Motorola SURFboard SB5101E, or Scientific Atlanta EPC2203 cable modem (eCos 2.0).",ports: "997 closed ports\n80/tcp    open     tcpwrapped.\n1900/tcp  open     upnp?.\n8080/tcp  open     http           Mongoose httpd.", color: "aquamarine", category: "name" },{ key:  "RB750-WAN, 192.168.1.31", basics: "Subnet: 192.168.1.0/24\nGateway: 192.168.1.254\nNetmask: 255.255.255.0\nDevice type: router\nRunning:  RouterOS Linux 2.6.X|3.X\nOS type: Linux", details: "Status: up\nLatency: 0.00027s latency\nHops: 1\nOC CPE: cpe:/o:mikrotik:routeros cpe:/o:linux:linux_kernel:2.6 cpe:/o:linux:linux_kernel:3\nOS Details: Linux 2.6.32 - 3.10.",ports: "993 closed ports\n21/tcp    open     ftp            MikroTik router ftpd 6.38.5.\n22/tcp    open     ssh            MikroTik RouterOS sshd (protocol 2.0).\n23/tcp    open     telnet         Linux telnetd.\n53/tcp    open     domain         MikroTik RouterOS named or OpenDNS Updater.\n80/tcp    open     http           MikroTik router config httpd.\n2000/tcp  open     bandwidth-test MikroTik bandwidth-test server.\n8291/tcp  open     winbox         MikroTik WinBox.", color: "orange", category: "name" },{ key:  "RB750, 192.168.11.1", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: router\nRunning:  RouterOS Linux 2.6.X|3.X\nMAC: 6C:3B:6B:C7:01:8E\nMAC Vendor: Routerboard.com\nOS type: Linux", details: "Status: up\nLatency: 0.00016s latency\nHops: 1\nOC CPE: cpe:/o:mikrotik:routeros cpe:/o:linux:linux_kernel:2.6 cpe:/o:linux:linux_kernel:3\nOS Details: Linux 2.6.32 - 3.10.",ports: "993 closed ports\n21/tcp    open     ftp            MikroTik router ftpd 6.38.5.\n22/tcp    open     ssh            MikroTik RouterOS sshd (protocol 2.0).\n23/tcp    open     telnet         Linux telnetd.\n53/tcp    open     domain         MikroTik RouterOS named or OpenDNS Updater.\n80/tcp    open     http           MikroTik router config httpd.\n2000/tcp  open     bandwidth-test MikroTik bandwidth-test server.\n8291/tcp  open     winbox         MikroTik WinBox.", color: "aquamarine", category: "name" },{ key:  "NUC, 192.168.11.100", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: general purpose\nRunning: Linux 3.X|4.X\nMAC: C0:3F:D5:62:BB:77\nMAC Vendor: Elitegroup Computer Systems\nOS type: Linux", details: "Status: up\nLatency: 0.00022s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:3 cpe:/o:linux:linux_kernel:4\nOS Details: Linux 3.10 - 4.2.",ports: "991 filtered ports\n22/tcp    open     ssh            OpenSSH 6.6.1 (protocol 2.0).\n80/tcp    closed   http.\n443/tcp   closed   https.\n8443/tcp  closed   https-alt.\n9200/tcp  closed   wap-wsp.\n9207/tcp  closed   wap-vcal-s.\n9220/tcp  closed   unknown.\n9290/tcp  closed   unknown.\n54328/tcp closed   unknown.", color: "lightsalmon", category: "name" },{ key:  "HP-P4015N, 192.168.11.104", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: printer\nRunning: HP embedded\nMAC: 3C:D9:2B:0F:B1:B1\nMAC Vendor: Hewlett Packard\nOS type: Linux", details: "Status: up\nLatency: 0.00019s latency\nHops: 1\nOC CPE: cpe:/h:hp:laserjet_p4014 \nOS Details: HP LaserJet 2055dn, 2420, P3005, CP4005, 4250, P4014, or P4015 printer.",ports: "992 closed ports\n21/tcp    open     ftp            HP LaserJet P4014 printer ftpd.\n80/tcp    open     http           Virata-EmWeb 6.2.1 (HP LaserJet http config).\n280/tcp   open     http           Virata-EmWeb 6.2.1 (HP LaserJet http config).\n443/tcp   open     ssl/http       HP-ChaiSOE 1.0 (HP LaserJet http config).\n515/tcp   open     printer.\n631/tcp   open     http           Virata-EmWeb 6.2.1 (HP LaserJet http config).\n9100/tcp  open     jetdirect?.\n14000/tcp open     tcpwrapped.", color: "tomato", category: "name" },{ key:  "HP-CM1312NFI, 192.168.11.116", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: printer\nRunning: Wind River VxWorks, HP embedded, Vocality embedded\nMAC: F4:CE:46:37:40:8A\nMAC Vendor: Hewlett Packard\nOS type: Linux", details: "Status: up\nLatency: 0.00019s latency\nHops: 1\nOC CPE: cpe:/o:windriver:vxworks\nOS Details: VxWorks: HP printer or Vocality BASICS Four Wire VoIP gateway.",ports: "990 closed ports\n80/tcp    open     http           Virata-EmWeb 6.2.1 (HP Color LaserJet CM1312nfi MFP printer http config).\n139/tcp   open     tcpwrapped.\n445/tcp   open     microsoft-ds.\n515/tcp   open     printer.\n8291/tcp  open     unknown.\n8292/tcp  filtered blp3.\n8888/tcp  open     sun-answerbook?.\n9100/tcp  open     jetdirect?.\n9999/tcp  open     abyss?.\n10002/tcp filtered documentum.", color: "tomato", category: "name" },{ key:  "ANDROID-2BA276BBCCB7765C, 192.168.11.162", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: phone\nMAC: E0:98:61:79:33:2E\nMAC Vendor: Motorola Mobility, a Lenovo Company\nOS type: Android", details: "Status: up\nLatency: 0.0050s latency\nHops: 1\nWarnings: Too many fingerprints match this host to give specific OS details.",ports: "All 1000 scanned ports are closed", color: "green", category: "name" },{ key:  "ANDROID-C24CE88744CC154C, 192.168.11.163", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: phone\nRunning: Google Android 5.X|6.X, Linux 3.X\nMAC: 1C:56:FE:9A:F9:93\nMAC Vendor: Motorola Mobility, a Lenovo Company\nOS type: Android", details: "Status: up\nLatency: 0.0047s latency\nHops: 1\nOC CPE: cpe:/o:google:android:5 cpe:/o:google:android:6 cpe:/o:linux:linux_kernel:3.10\nOS Details: Android 5.0 - 6.0 (Linux 3.10).",ports: "999 closed ports\n9080/tcp  open     http           Mongoose httpd.", color: "green", category: "name" },{ key:  "PERSONALCLOUD, 192.168.11.169", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: nas\nRunning: Linux 3.X\nMAC: 00:10:75:57:40:0B\nMAC Vendor: Segate Technology\nOS type: Linux", details: "Status: up\nLatency: 0.00022s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:2 cpe:/o:linux:linux_kernel:3.10\nOS Details: Linux 3.10, Linux 3.2 - 3.16.",ports: "995 closed ports\n80/tcp    open     http           lighttpd 1.4.35.\n139/tcp   open     netbios-ssn    Samba smbd 3.X - 4.X (workgroup: WORKGROUP).\n443/tcp   open     ssl/http       lighttpd 1.4.35.\n445/tcp   open     netbios-ssn    Samba smbd 4.5.0 (workgroup: WORKGROUP).\n9000/tcp  open     upnp           TwonkyMedia UPnP (UPnP 1.0; pvConnect SDK 1.0; Twonky SDK 1.1).", color: "antiquewhite", category: "name" },{ key:  "TED1090-3, 192.168.11.171", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: general purpose\nRunning: Linux 3.X|4.X\nMAC: B8:27:EB:F7:69:67\nMAC Vendor: Raspberry Pi Foundation\nOS type: Linux", details: "Status: up\nLatency: 0.00032s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:3 cpe:/o:linux:linux_kernel:4\nOS Details: Linux 3.2 - 4.6.",ports: "998 closed ports\n22/tcp    open     ssh            OpenSSH 6.7p1 Raspbian 5+deb8u3 (protocol 2.0).\n80/tcp    open     http           lighttpd 1.4.35.", color: "lightblue", category: "name" },{ key:  "TED1090-1, 192.168.11.172", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: general purpose\nRunning: Linux 3.X|4.X\nMAC: B8:27:EB:90:86:E0\nMAC Vendor: Raspberry Pi Foundation\nOS type: Linux", details: "Status: up\nLatency: 0.00052s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:3 cpe:/o:linux:linux_kernel:4\nOS Details: Linux 3.2 - 4.6.",ports: "998 closed ports\n22/tcp    open     ssh            OpenSSH 6.7p1 Raspbian 5+deb8u3 (protocol 2.0).\n80/tcp    open     http           lighttpd 1.4.35.", color: "lightblue", category: "name" },{ key:  "TED1090-5, 192.168.11.174", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: general purpose\nRunning: Linux 3.X|4.X\nMAC: B8:27:EB:DE:54:F0\nMAC Vendor: Raspberry Pi Foundation\nOS type: Linux", details: "Status: up\nLatency: 0.00023s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:3 cpe:/o:linux:linux_kernel:4\nOS Details: Linux 3.2 - 4.6.",ports: "998 closed ports\n22/tcp    open     ssh            OpenSSH 6.7p1 Raspbian 5+deb8u3 (protocol 2.0).\n80/tcp    open     http           lighttpd 1.4.35.", color: "lightblue", category: "name" },{ key:  "TED1090-6, 192.168.11.175", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: general purpose\nRunning: Linux 3.X\nMAC: 2E:DC:54:46:0C:DC\nMAC Vendor: Unknown\nOS type: Linux", details: "Status: up\nLatency: 0.00016s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:3\nOS Details: Linux 3.2 - 3.16.",ports: "998 closed ports\n22/tcp    open     ssh            OpenSSH 6.7p1 Debian 5+deb8u3 (protocol 2.0).\n80/tcp    open     http           lighttpd 1.4.35.", color: "lightsalmon", category: "name" },{ key:  "TED1090-2, 192.168.11.176", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: general purpose\nRunning: Linux 3.X|4.X\nMAC: B8:27:EB:7F:16:13\nMAC Vendor: Raspberry Pi Foundation\nOS type: Linux", details: "Status: up\nLatency: 0.00048s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:3 cpe:/o:linux:linux_kernel:4\nOS Details: Linux 3.2 - 4.6.",ports: "998 closed ports\n22/tcp    open     ssh            OpenSSH 6.7p1 Raspbian 5+deb8u3 (protocol 2.0).\n80/tcp    open     http           lighttpd 1.4.35.", color: "lightblue", category: "name" },{ key:  "TED1090-7, 192.168.11.177", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: general purpose\nRunning: Linux 3.X\nMAC: 26:0F:0A:3D:79:DC\nMAC Vendor: Unknown\nOS type: Linux", details: "Status: up\nLatency: 0.00021s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:3\nOS Details: Linux 3.2 - 3.16.",ports: "998 closed ports\n22/tcp    open     ssh            OpenSSH 6.7p1 Debian 5+deb8u3 (protocol 2.0).\n80/tcp    open     http           lighttpd 1.4.35.", color: "lightsalmon", category: "name" },{ key:  "TED1090-4, 192.168.11.178", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: general purpose\nRunning: Linux 3.X|4.X\nMAC: B8:27:EB:79:B3:10\nMAC Vendor: Raspberry Pi Foundation\nOS type: Linux", details: "Status: up\nLatency: 0.00035s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:3 cpe:/o:linux:linux_kernel:4\nOS Details: Linux 3.2 - 4.6.",ports: "998 closed ports\n22/tcp    open     ssh            OpenSSH 6.7p1 Raspbian 5+deb8u3 (protocol 2.0).\n80/tcp    open     http           lighttpd 1.4.35.", color: "lightblue", category: "name" },{ key:  "IPADVANANNELIES, 192.168.11.184", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: media device|phone\nMAC: A4:D1:D2:7B:64:B2\nMAC Vendor: Apple\nOS type: IOS", details: "Status: up\nLatency: 0.0080s latency\nHops: 1\nOS Details: Apple Mac OS X 10.7.0 (Lion) - 10.11 (El Capitan) or iOS 4.1 - 9.3.3 (Darwin 10.0.0 - 15.6.0).",ports: "999 closed ports\n62078/tcp open     tcpwrapped.", color: "lime", category: "name" },{ key:  "CHROMECAST-BACHSTRAAT20, 192.168.11.187", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: media device\nRunning: Google Chrome Cast Linux 2.6.X|3.X\nMAC: 00:E0:4C:36:4F:BA\nMAC Vendor: Realtek Semiconductor\nOS type: Linux", details: "Status: up\nLatency: 0.00027s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:2.6 cpe:/o:linux:linux_kernel:3\nOS Details: Linux 2.6.32 - 3.10.",ports: "998 closed ports\n8008/tcp  open     http           Google Chromecast httpd.\n8009/tcp  open     ssl/ajp13?.", color: "orchid", category: "name" },{ key:  "GS724T, 192.168.11.200", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: switch\nMAC: A0:04:60:26:28:CE\nMAC Vendor: Netgear\nOS type: Linux", details: "Status: up\nLatency: 0.0017s latency\nWarnings: No exact OS matches for host (If you know what OS is running on it, see https://nmap.org/submit/ )..",ports: "998 closed ports\n80/tcp    open     http           Netgear GS724Tv4 http config.\n4242/tcp  open     vrml-multi-use?.", color: "chartreuse", category: "name" },{ key:  "WNDAP660, 192.168.11.201", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: switch\nRunning: Linux 2.6.X\nMAC: 04:A1:51:52:BF:C8\nMAC Vendor: Netgear\nOS type: Linux", details: "Status: up\nLatency: 0.00017s latency\nHops: 1\nOC CPE: cpe:/o:linux:linux_kernel:2.6\nOS Details: Linux 2.6.17 - 2.6.36.",ports: "997 closed ports\n22/tcp    open     ssh            Dropbear sshd 0.51 (protocol 2.0).\n80/tcp    open     http           lighttpd 1.4.18.\n443/tcp   open     ssl/http       lighttpd 1.4.18.", color: "chartreuse", category: "name" },{ key:  "192.168.11.209", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: unknown\nOS type: unknown", details: "",ports: "", color: "gold", category: "name" },{ key:  "NASTED, 192.168.11.38", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: storage-misc\nRunning: QNAP Linux 2.6.X|3.X\nMAC: 00:08:9B:C6:10:24\nMAC Vendor: ICP Electronics\nOS type: Linux", details: "Status: up\nLatency: 0.00015s latency\nHops: 1\nOC CPE: cpe:/h:qnap:ts-419p+ cpe:/o:linux:linux_kernel:2.6 cpe:/o:linux:linux_kernel:3\nOS Details: Linux 2.6.32 - 3.10.",ports: "986 closed ports\n21/tcp    open     ftp            ProFTPD (requires SSL).\n22/tcp    open     ssh            OpenSSH 7.3 (protocol 2.0).\n80/tcp    open     http           QNAP TS-419P+ NAS http config 1.0.\n111/tcp   open     rpcbind        2-4 (RPC #100000).\n139/tcp   open     netbios-ssn    Samba smbd 3.X - 4.X (workgroup: NAS).\n443/tcp   open     ssl/http       Apache httpd.\n445/tcp   open     netbios-ssn    Samba smbd 3.6.25 (workgroup: NAS).\n631/tcp   open     ipp            CUPS 2.1.\n873/tcp   open     rsync          (protocol version 30).\n2049/tcp  open     nfs            2-3 (RPC #100003).\n8080/tcp  open     http           Apache httpd.\n8800/tcp  open     http           CherryPy httpd 3.2.0.\n9090/tcp  open     http           SABnzbd newsreader http interface.\n30000/tcp open     mountd         1-3 (RPC #100005).", color: "palevioletred", category: "name" },{ key:  "MSI, 192.168.11.80", basics: "Subnet: 192.168.11.0/24\nGateway: 192.168.11.1\nNetmask: 255.255.255.0\nDevice type: unknown\nMAC: d4:3d:7e:4e:29:83\nOS type: unknown", details: "Status: up\nLatency: 0.000061s latency\nWarnings: No exact OS matches for host (If you know what OS is running on it, see https://nmap.org/submit/ )..",ports: "998 closed ports\n22/tcp    open     ssh            OpenSSH 7.2 (protocol 2.0).\n111/tcp   open     rpcbind        2-4 (RPC #100000).", color: "gold", category: "name" },{ key:  "192.168.122.1", basics: "Subnet: 192.168.122.0/24\nGateway: 192.168.11.80\nNetmask: 255.255.255.0\nDevice type: unknown\nMAC: 00:00:00:00:00:00\nOS type: unknown", details: "Status: up\nLatency: 0.000059s latency\nWarnings: No exact OS matches for host (If you know what OS is running on it, see https://nmap.org/submit/ )..",ports: "997 closed ports\n22/tcp    open     ssh            OpenSSH 7.2 (protocol 2.0).\n53/tcp    open     domain         dnsmasq 2.76.\n111/tcp   open     rpcbind        2-4 (RPC #100000).", color: "gold", category: "name" },{ key:  "Internet Gateway", basics: "Hops:[rb750 (192.168.11.1)]\n[ziggo-router (192.168.1.254)]\n[mnd-rc0001-cr101-xe-0-1-2-0.core.as9143.net (213.51.190.81)]\n[84.116.135.37 (84.116.135.37)]\n[84.116.135.38 (84.116.135.38)]\n[74.125.146.228 (74.125.146.228)]\n[108.170.241.131 (108.170.241.131)]\n[216.239.47.100 (216.239.47.100)]\n[108.170.232.72 (108.170.232.72)]\n[108.170.237.135 (108.170.237.135)]\n[google-public-dns-a.google.com (8.8.8.8)]", details: "[rb750 (192.168.11.1)]--->[ziggo-router (192.168.1.254)]--->[mnd-rc0001-cr101-xe-0-1-2-0.core.as9143.net (213.51.190.81)]--->[84.116.135.37 (84.116.135.37)]--->[84.116.135.38 (84.116.135.38)]--->[74.125.146.228 (74.125.146.228)]--->[108.170.241.131 (108.170.241.131)]--->[216.239.47.100 (216.239.47.100)]--->[108.170.232.72 (108.170.232.72)]--->[108.170.237.135 (108.170.237.135)]--->[google-public-dns-a.google.com (8.8.8.8)]",ports: "*any*", color: "yellow", category: "name" }];
+diagram.model.linkDataArray = [{ from: "INTERNET-RADIO, 192.168.1.10", to: "ZIGGO-ROUTER, 192.168.1.254" },{ from: "SAMBA, 192.168.1.13", to: "ZIGGO-ROUTER, 192.168.1.254" },{ from: "192.168.1.207", to: "ZIGGO-ROUTER, 192.168.1.254" },{ from: "PHILIPS-HUE-BRIDGE, 192.168.1.21", to: "ZIGGO-ROUTER, 192.168.1.254" },{ from: "SAMSUNGTV, 192.168.1.22", to: "ZIGGO-ROUTER, 192.168.1.254" },{ from: "192.168.1.23", to: "ZIGGO-ROUTER, 192.168.1.254" },{ from: "RB750-WAN, 192.168.1.31", to: "ZIGGO-ROUTER, 192.168.1.254" },{ from: "NUC, 192.168.11.100", to: "RB750, 192.168.11.1" },{ from: "HP-P4015N, 192.168.11.104", to: "RB750, 192.168.11.1" },{ from: "HP-CM1312NFI, 192.168.11.116", to: "RB750, 192.168.11.1" },{ from: "ANDROID-2BA276BBCCB7765C, 192.168.11.162", to: "RB750, 192.168.11.1" },{ from: "ANDROID-C24CE88744CC154C, 192.168.11.163", to: "RB750, 192.168.11.1" },{ from: "PERSONALCLOUD, 192.168.11.169", to: "RB750, 192.168.11.1" },{ from: "TED1090-3, 192.168.11.171", to: "RB750, 192.168.11.1" },{ from: "TED1090-1, 192.168.11.172", to: "RB750, 192.168.11.1" },{ from: "TED1090-5, 192.168.11.174", to: "RB750, 192.168.11.1" },{ from: "TED1090-6, 192.168.11.175", to: "RB750, 192.168.11.1" },{ from: "TED1090-2, 192.168.11.176", to: "RB750, 192.168.11.1" },{ from: "TED1090-7, 192.168.11.177", to: "RB750, 192.168.11.1" },{ from: "TED1090-4, 192.168.11.178", to: "RB750, 192.168.11.1" },{ from: "IPADVANANNELIES, 192.168.11.184", to: "RB750, 192.168.11.1" },{ from: "CHROMECAST-BACHSTRAAT20, 192.168.11.187", to: "RB750, 192.168.11.1" },{ from: "GS724T, 192.168.11.200", to: "RB750, 192.168.11.1" },{ from: "WNDAP660, 192.168.11.201", to: "RB750, 192.168.11.1" },{ from: "192.168.11.209", to: "RB750, 192.168.11.1" },{ from: "NASTED, 192.168.11.38", to: "RB750, 192.168.11.1" },{ from: "MSI, 192.168.11.80", to: "RB750, 192.168.11.1" },{ from: "192.168.122.1", to: "MSI, 192.168.11.80" },{ from: "ZIGGO-ROUTER, 192.168.1.254", to: "Internet Gateway" },{ from: "RB750, 192.168.11.1", to: "RB750-WAN, 192.168.1.31" }];
 </script>
-<script>goCode("changingCategory", 1900, 1080)</script>
+<script>goCode("changingCategory", 100, 600)</script>
 
 
 </div>
@@ -195,39 +193,29 @@ diagram.model.linkDataArray = [{ from: "192.168.1.10", to: "ZIGGO-ROUTER, 192.16
     <th>Host name</th>
     <th>IP Address</th> 
     <th>MAC Address</th> 
-    <th>Vendor</th> 
+    <th>MAC Vendor</th> 
     <th>Netmask</th>
     <th>Gateway</th>
     <th>Device type</th>
+    <th>OS type</th>
     <th>Running</th>
     <th>Hops</th>
     <th>OC CP</th>
     <th>OC Details</th>
+    <th>Ports</th>
   </tr>
  </thead>
  <tbody>
   <tr bgcolor="gold">
     <td>192.168.1.0/24</td>
-    <td></td>
+    <td>INTERNET-RADIO</td>
     <td>192.168.1.10</td>
     <td></td>
     <td></td>
     <td>255.255.255.0</td>
     <td>192.168.1.254</td>
-    <td>webcam|media device|printer|WAP</td>
-    <td>(JUST GUESSING): Leica embedded (93%), Frontier Silicon embedded (93%), Canon embedded (90%), Novatel embedded (89%), Olympus embedded (89%), iDirect embedded (86%)</td>
-    <td>55</td>
-    <td>cpe:/h:canon:imageclass_mf212w cpe:/h:novatel:mifi_4620l /olympus:stylus_sh-2</td>
-    <td></td>
-  </tr>
-  <tr bgcolor="gold">
-    <td>192.168.1.0/24</td>
-    <td></td>
-    <td>192.168.1.118</td>
-    <td></td>
-    <td></td>
-    <td>255.255.255.0</td>
-    <td>192.168.1.254</td>
+    <td>unknown</td>
+    <td>unknown</td>
     <td></td>
     <td></td>
     <td></td>
@@ -236,45 +224,83 @@ diagram.model.linkDataArray = [{ from: "192.168.1.10", to: "ZIGGO-ROUTER, 192.16
   </tr>
   <tr bgcolor="lightsalmon">
     <td>192.168.1.0/24</td>
-    <td></td>
+    <td>SAMBA</td>
     <td>192.168.1.13</td>
     <td></td>
     <td></td>
     <td>255.255.255.0</td>
     <td>192.168.1.254</td>
     <td>WAP</td>
+    <td>Linux</td>
     <td>Linux 2.6.X</td>
     <td>2</td>
     <td>cpe:/o:linux/x_kernel:2.6.22</td>
     <td>Tomato 1.28 (Linux 2.6.22).</td>
+    <td>139/tcp 445/tcp </td>
   </tr>
   <tr bgcolor="gold">
     <td>192.168.1.0/24</td>
     <td></td>
+    <td>192.168.1.207</td>
+    <td></td>
+    <td></td>
+    <td>255.255.255.0</td>
+    <td>192.168.1.254</td>
+    <td>unknown</td>
+    <td>unknown</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr bgcolor="sienna">
+    <td>192.168.1.0/24</td>
+    <td>PHILIPS-HUE-BRIDGE</td>
     <td>192.168.1.21</td>
     <td></td>
     <td></td>
     <td>255.255.255.0</td>
     <td>192.168.1.254</td>
+    <td>bridge</td>
+    <td>Linux</td>
+    <td>philips hue bridge </td>
     <td></td>
     <td></td>
     <td></td>
-    <td></td>
-    <td></td>
+    <td>80/tcp </td>
   </tr>
-  <tr bgcolor="lightsalmon">
+  <tr bgcolor="yellowgreen">
     <td>192.168.1.0/24</td>
-    <td></td>
+    <td>SAMSUNGTV</td>
     <td>192.168.1.22</td>
     <td></td>
     <td></td>
     <td>255.255.255.0</td>
     <td>192.168.1.254</td>
     <td>general purpose</td>
-    <td>Linux 3.X</td>
+    <td>Linux</td>
+    <td>samsung tv Linux 3.X</td>
     <td>2</td>
     <td>cpe:/o:linux/x_kernel:3</td>
     <td>Linux 3.2 - 3.8.</td>
+    <td>7676/tcp 8000/tcp 8001/tcp 8002/tcp 8080/tcp 9080/tcp 9999/tcp </td>
+  </tr>
+  <tr bgcolor="gold">
+    <td>192.168.1.0/24</td>
+    <td></td>
+    <td>192.168.1.23</td>
+    <td></td>
+    <td></td>
+    <td>255.255.255.0</td>
+    <td>192.168.1.254</td>
+    <td>unknown</td>
+    <td>unknown</td>
+    <td></td>
+    <td>2</td>
+    <td></td>
+    <td></td>
+    <td></td>
   </tr>
   <tr bgcolor="aquamarine">
     <td>192.168.1.0/24</td>
@@ -284,11 +310,13 @@ diagram.model.linkDataArray = [{ from: "192.168.1.10", to: "ZIGGO-ROUTER, 192.16
     <td></td>
     <td>255.255.255.0</td>
     <td>192.168.1.254</td>
-    <td>broadband router</td>
+    <td>router</td>
+    <td>Linux</td>
     <td>eCosCentric eCos 2.X, Cisco embedded, Motorola embedded, Scientific Atlanta embedded</td>
     <td>2</td>
     <td>cpe:/o:ecoscentric:ecos:2.0 cpe:/h:cisco:epc3925 cpe:/h:cisco:dpc2320 cpe:/h:motorola:sb5101e /h:scientific_atlanta:epc2203</td>
     <td>Cisco EPC3925, DPC2320, Motorola SURFboard SB5101E, or Scientific Atlanta EPC2203 cable modem (eCos 2.0).</td>
+    <td>80/tcp 1900/tcp 8080/tcp </td>
   </tr>
   <tr bgcolor="orange">
     <td>192.168.1.0/24</td>
@@ -298,11 +326,13 @@ diagram.model.linkDataArray = [{ from: "192.168.1.10", to: "ZIGGO-ROUTER, 192.16
     <td></td>
     <td>255.255.255.0</td>
     <td>192.168.1.254</td>
-    <td>general purpose</td>
-    <td>Linux 2.6.X|3.X</td>
+    <td>router</td>
+    <td>Linux</td>
+    <td> RouterOS Linux 2.6.X|3.X</td>
     <td>1</td>
-    <td>cpe:/o:linux:linux_kernel:2.6 /3</td>
+    <td>cpe:/o:mikrotik:routeros cpe:/o:linux:linux_kernel:2.6 /linux:linux_kernel:3</td>
     <td>Linux 2.6.32 - 3.10.</td>
+    <td>21/tcp 22/tcp 23/tcp 53/tcp 80/tcp 2000/tcp 8291/tcp </td>
   </tr>
   <tr bgcolor="aquamarine">
     <td>192.168.11.0/24</td>
@@ -312,55 +342,95 @@ diagram.model.linkDataArray = [{ from: "192.168.1.10", to: "ZIGGO-ROUTER, 192.16
     <td>Routerboard.com</td>
     <td>255.255.255.0</td>
     <td>192.168.11.1</td>
-    <td>general purpose</td>
-    <td>Linux 2.6.X|3.X</td>
+    <td>router</td>
+    <td>Linux</td>
+    <td> RouterOS Linux 2.6.X|3.X</td>
     <td>1</td>
-    <td>cpe:/o:linux:linux_kernel:2.6 /3</td>
+    <td>cpe:/o:mikrotik:routeros cpe:/o:linux:linux_kernel:2.6 /linux:linux_kernel:3</td>
     <td>Linux 2.6.32 - 3.10.</td>
+    <td>21/tcp 22/tcp 23/tcp 53/tcp 80/tcp 2000/tcp 8291/tcp </td>
+  </tr>
+  <tr bgcolor="lightsalmon">
+    <td>192.168.11.0/24</td>
+    <td>NUC</td>
+    <td>192.168.11.100</td>
+    <td>C0:3F:D5:62:BB:77</td>
+    <td>Elitegroup Computer Systems</td>
+    <td>255.255.255.0</td>
+    <td>192.168.11.1</td>
+    <td>general purpose</td>
+    <td>Linux</td>
+    <td>Linux 3.X|4.X</td>
+    <td>1</td>
+    <td>cpe:/o:linux:linux_kernel:3 /4</td>
+    <td>Linux 3.10 - 4.2.</td>
+    <td>22/tcp 80/tcp 443/tcp 8443/tcp 9200/tcp 9207/tcp 9220/tcp 9290/tcp 54328/tcp </td>
   </tr>
   <tr bgcolor="tomato">
     <td>192.168.11.0/24</td>
-    <td>P4015N</td>
+    <td>HP-P4015N</td>
     <td>192.168.11.104</td>
     <td>3C:D9:2B:0F:B1:B1</td>
     <td>Hewlett Packard</td>
     <td>255.255.255.0</td>
     <td>192.168.11.1</td>
     <td>printer</td>
+    <td>Linux</td>
     <td>HP embedded</td>
     <td>1</td>
-    <td></td>
+    <td>cpe:/h:hp:laserjet_p4014 </td>
     <td>HP LaserJet 2055dn, 2420, P3005, CP4005, 4250, P4014, or P4015 printer.</td>
+    <td>21/tcp 80/tcp 280/tcp 443/tcp 515/tcp 631/tcp 9100/tcp 14000/tcp </td>
+  </tr>
+  <tr bgcolor="tomato">
+    <td>192.168.11.0/24</td>
+    <td>HP-CM1312NFI</td>
+    <td>192.168.11.116</td>
+    <td>F4:CE:46:37:40:8A</td>
+    <td>Hewlett Packard</td>
+    <td>255.255.255.0</td>
+    <td>192.168.11.1</td>
+    <td>printer</td>
+    <td>Linux</td>
+    <td>Wind River VxWorks, HP embedded, Vocality embedded</td>
+    <td>1</td>
+    <td>cpe:/o:windriver:vxworks</td>
+    <td>VxWorks: HP printer or Vocality BASICS Four Wire VoIP gateway.</td>
+    <td>80/tcp 139/tcp 445/tcp 515/tcp 8291/tcp 8292/tcp 8888/tcp 9100/tcp 9999/tcp 10002/tcp </td>
   </tr>
   <tr bgcolor="green">
     <td>192.168.11.0/24</td>
-    <td></td>
+    <td>ANDROID-2BA276BBCCB7765C</td>
     <td>192.168.11.162</td>
     <td>E0:98:61:79:33:2E</td>
     <td>Motorola Mobility, a Lenovo Company</td>
     <td>255.255.255.0</td>
     <td>192.168.11.1</td>
-    <td></td>
+    <td>phone</td>
+    <td>Android</td>
     <td></td>
     <td>1</td>
     <td></td>
     <td></td>
+    <td></td>
   </tr>
-  <tr bgcolor="gold">
+  <tr bgcolor="green">
     <td>192.168.11.0/24</td>
-    <td></td>
-    <td>192.168.11.167</td>
-    <td></td>
-    <td></td>
+    <td>ANDROID-C24CE88744CC154C</td>
+    <td>192.168.11.163</td>
+    <td>1C:56:FE:9A:F9:93</td>
+    <td>Motorola Mobility, a Lenovo Company</td>
     <td>255.255.255.0</td>
     <td>192.168.11.1</td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
+    <td>phone</td>
+    <td>Android</td>
+    <td>Google Android 5.X|6.X, Linux 3.X</td>
+    <td>1</td>
+    <td>cpe:/o:google:android:5 /6 cpe:/o:linux:linux_kernel:3.10</td>
+    <td>Android 5.0 - 6.0 (Linux 3.10).</td>
+    <td>9080/tcp </td>
   </tr>
-  <tr bgcolor="lightsalmon">
+  <tr bgcolor="antiquewhite">
     <td>192.168.11.0/24</td>
     <td>PERSONALCLOUD</td>
     <td>192.168.11.169</td>
@@ -368,11 +438,13 @@ diagram.model.linkDataArray = [{ from: "192.168.1.10", to: "ZIGGO-ROUTER, 192.16
     <td>Segate Technology</td>
     <td>255.255.255.0</td>
     <td>192.168.11.1</td>
-    <td>general purpose</td>
+    <td>nas</td>
+    <td>Linux</td>
     <td>Linux 3.X</td>
     <td>1</td>
-    <td>cpe:/o:linux/x_kernel:3</td>
-    <td>Linux 3.2 - 3.16.</td>
+    <td>cpe:/o:linux:linux_kernel:2 /3.10</td>
+    <td>Linux 3.10, Linux 3.2 - 3.16.</td>
+    <td>80/tcp 139/tcp 443/tcp 445/tcp 9000/tcp </td>
   </tr>
   <tr bgcolor="lightblue">
     <td>192.168.11.0/24</td>
@@ -383,10 +455,12 @@ diagram.model.linkDataArray = [{ from: "192.168.1.10", to: "ZIGGO-ROUTER, 192.16
     <td>255.255.255.0</td>
     <td>192.168.11.1</td>
     <td>general purpose</td>
+    <td>Linux</td>
     <td>Linux 3.X|4.X</td>
     <td>1</td>
     <td>cpe:/o:linux:linux_kernel:3 /4</td>
     <td>Linux 3.2 - 4.6.</td>
+    <td>22/tcp 80/tcp </td>
   </tr>
   <tr bgcolor="lightblue">
     <td>192.168.11.0/24</td>
@@ -397,10 +471,12 @@ diagram.model.linkDataArray = [{ from: "192.168.1.10", to: "ZIGGO-ROUTER, 192.16
     <td>255.255.255.0</td>
     <td>192.168.11.1</td>
     <td>general purpose</td>
+    <td>Linux</td>
     <td>Linux 3.X|4.X</td>
     <td>1</td>
     <td>cpe:/o:linux:linux_kernel:3 /4</td>
     <td>Linux 3.2 - 4.6.</td>
+    <td>22/tcp 80/tcp </td>
   </tr>
   <tr bgcolor="lightblue">
     <td>192.168.11.0/24</td>
@@ -411,10 +487,12 @@ diagram.model.linkDataArray = [{ from: "192.168.1.10", to: "ZIGGO-ROUTER, 192.16
     <td>255.255.255.0</td>
     <td>192.168.11.1</td>
     <td>general purpose</td>
+    <td>Linux</td>
     <td>Linux 3.X|4.X</td>
     <td>1</td>
     <td>cpe:/o:linux:linux_kernel:3 /4</td>
     <td>Linux 3.2 - 4.6.</td>
+    <td>22/tcp 80/tcp </td>
   </tr>
   <tr bgcolor="lightsalmon">
     <td>192.168.11.0/24</td>
@@ -425,10 +503,12 @@ diagram.model.linkDataArray = [{ from: "192.168.1.10", to: "ZIGGO-ROUTER, 192.16
     <td>255.255.255.0</td>
     <td>192.168.11.1</td>
     <td>general purpose</td>
+    <td>Linux</td>
     <td>Linux 3.X</td>
     <td>1</td>
     <td>cpe:/o:linux/x_kernel:3</td>
     <td>Linux 3.2 - 3.16.</td>
+    <td>22/tcp 80/tcp </td>
   </tr>
   <tr bgcolor="lightblue">
     <td>192.168.11.0/24</td>
@@ -439,10 +519,12 @@ diagram.model.linkDataArray = [{ from: "192.168.1.10", to: "ZIGGO-ROUTER, 192.16
     <td>255.255.255.0</td>
     <td>192.168.11.1</td>
     <td>general purpose</td>
+    <td>Linux</td>
     <td>Linux 3.X|4.X</td>
     <td>1</td>
     <td>cpe:/o:linux:linux_kernel:3 /4</td>
     <td>Linux 3.2 - 4.6.</td>
+    <td>22/tcp 80/tcp </td>
   </tr>
   <tr bgcolor="lightsalmon">
     <td>192.168.11.0/24</td>
@@ -453,10 +535,12 @@ diagram.model.linkDataArray = [{ from: "192.168.1.10", to: "ZIGGO-ROUTER, 192.16
     <td>255.255.255.0</td>
     <td>192.168.11.1</td>
     <td>general purpose</td>
+    <td>Linux</td>
     <td>Linux 3.X</td>
     <td>1</td>
     <td>cpe:/o:linux/x_kernel:3</td>
     <td>Linux 3.2 - 3.16.</td>
+    <td>22/tcp 80/tcp </td>
   </tr>
   <tr bgcolor="lightblue">
     <td>192.168.11.0/24</td>
@@ -467,52 +551,44 @@ diagram.model.linkDataArray = [{ from: "192.168.1.10", to: "ZIGGO-ROUTER, 192.16
     <td>255.255.255.0</td>
     <td>192.168.11.1</td>
     <td>general purpose</td>
+    <td>Linux</td>
     <td>Linux 3.X|4.X</td>
     <td>1</td>
     <td>cpe:/o:linux:linux_kernel:3 /4</td>
     <td>Linux 3.2 - 4.6.</td>
+    <td>22/tcp 80/tcp </td>
   </tr>
   <tr bgcolor="lime">
     <td>192.168.11.0/24</td>
-    <td></td>
+    <td>IPADVANANNELIES</td>
     <td>192.168.11.184</td>
     <td>A4:D1:D2:7B:64:B2</td>
     <td>Apple</td>
     <td>255.255.255.0</td>
     <td>192.168.11.1</td>
-    <td></td>
+    <td>media device|phone</td>
+    <td>IOS</td>
     <td></td>
     <td>1</td>
     <td></td>
     <td>Apple Mac OS X 10.7.0 (Lion) - 10.11 (El Capitan) or iOS 4.1 - 9.3.3 (Darwin 10.0.0 - 15.6.0).</td>
+    <td>62078/tcp </td>
   </tr>
-  <tr bgcolor="gold">
+  <tr bgcolor="orchid">
     <td>192.168.11.0/24</td>
-    <td></td>
-    <td>192.168.11.185</td>
-    <td>C0:BD:D1:88:45:26</td>
-    <td>Samsung Electro-mechanics(thailand)</td>
-    <td>255.255.255.0</td>
-    <td>192.168.11.1</td>
-    <td></td>
-    <td></td>
-    <td>1</td>
-    <td></td>
-    <td></td>
-  </tr>
-  <tr bgcolor="lightsalmon">
-    <td>192.168.11.0/24</td>
-    <td></td>
+    <td>CHROMECAST-BACHSTRAAT20</td>
     <td>192.168.11.187</td>
     <td>00:E0:4C:36:4F:BA</td>
     <td>Realtek Semiconductor</td>
     <td>255.255.255.0</td>
     <td>192.168.11.1</td>
-    <td>general purpose</td>
-    <td>Linux 2.6.X|3.X</td>
+    <td>media device</td>
+    <td>Linux</td>
+    <td>Google Chrome Cast Linux 2.6.X|3.X</td>
     <td>1</td>
     <td>cpe:/o:linux:linux_kernel:2.6 /3</td>
     <td>Linux 2.6.32 - 3.10.</td>
+    <td>8008/tcp 8009/tcp </td>
   </tr>
   <tr bgcolor="chartreuse">
     <td>192.168.11.0/24</td>
@@ -523,10 +599,12 @@ diagram.model.linkDataArray = [{ from: "192.168.1.10", to: "ZIGGO-ROUTER, 192.16
     <td>255.255.255.0</td>
     <td>192.168.11.1</td>
     <td>switch</td>
-    <td>Netgear embedded</td>
-    <td>1</td>
+    <td>Linux</td>
     <td></td>
-    <td>Netgear GS700T-series switch.</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td>80/tcp 4242/tcp </td>
   </tr>
   <tr bgcolor="chartreuse">
     <td>192.168.11.0/24</td>
@@ -536,13 +614,31 @@ diagram.model.linkDataArray = [{ from: "192.168.1.10", to: "ZIGGO-ROUTER, 192.16
     <td>Netgear</td>
     <td>255.255.255.0</td>
     <td>192.168.11.1</td>
-    <td>general purpose</td>
+    <td>switch</td>
+    <td>Linux</td>
     <td>Linux 2.6.X</td>
     <td>1</td>
     <td>cpe:/o:linux/x_kernel:2.6</td>
     <td>Linux 2.6.17 - 2.6.36.</td>
+    <td>22/tcp 80/tcp 443/tcp </td>
   </tr>
-  <tr bgcolor="lightsalmon">
+  <tr bgcolor="gold">
+    <td>192.168.11.0/24</td>
+    <td></td>
+    <td>192.168.11.209</td>
+    <td></td>
+    <td></td>
+    <td>255.255.255.0</td>
+    <td>192.168.11.1</td>
+    <td>unknown</td>
+    <td>unknown</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr bgcolor="palevioletred">
     <td>192.168.11.0/24</td>
     <td>NASTED</td>
     <td>192.168.11.38</td>
@@ -550,53 +646,45 @@ diagram.model.linkDataArray = [{ from: "192.168.1.10", to: "ZIGGO-ROUTER, 192.16
     <td>ICP Electronics</td>
     <td>255.255.255.0</td>
     <td>192.168.11.1</td>
-    <td>general purpose</td>
-    <td>Linux 2.6.X|3.X</td>
+    <td>storage-misc</td>
+    <td>Linux</td>
+    <td>QNAP Linux 2.6.X|3.X</td>
     <td>1</td>
-    <td>cpe:/o:linux:linux_kernel:2.6 /3</td>
+    <td>cpe:/h:qnap:ts-419p+ cpe:/o:linux:linux_kernel:2.6 /o:linux:linux_kernel:3</td>
     <td>Linux 2.6.32 - 3.10.</td>
-  </tr>
-  <tr bgcolor="lightsalmon">
-    <td>192.168.11.0/24</td>
-    <td>MSI</td>
-    <td>192.168.11.80</td>
-    <td>D4:3D:7E:4E:29:83</td>
-    <td>Micro-Star Int'l</td>
-    <td>255.255.255.0</td>
-    <td>192.168.11.1</td>
-    <td>general purpose</td>
-    <td>Linux 3.X|4.X</td>
-    <td>1</td>
-    <td>cpe:/o:linux:linux_kernel:3 /4</td>
-    <td>Linux 3.10 - 4.2.</td>
+    <td>21/tcp 22/tcp 80/tcp 111/tcp 139/tcp 443/tcp 445/tcp 631/tcp 873/tcp 2049/tcp 8080/tcp 8800/tcp 9090/tcp 30000/tcp </td>
   </tr>
   <tr bgcolor="gold">
     <td>192.168.11.0/24</td>
-    <td></td>
-    <td>192.168.11.97</td>
-    <td></td>
+    <td>MSI</td>
+    <td>192.168.11.80</td>
+    <td>d4:3d:7e:4e:29:83</td>
     <td></td>
     <td>255.255.255.0</td>
     <td>192.168.11.1</td>
+    <td>unknown</td>
+    <td>unknown</td>
     <td></td>
     <td></td>
     <td></td>
     <td></td>
-    <td></td>
+    <td>22/tcp 111/tcp </td>
   </tr>
   <tr bgcolor="gold">
     <td>192.168.122.0/24</td>
     <td></td>
     <td>192.168.122.1</td>
-    <td></td>
+    <td>00:00:00:00:00:00</td>
     <td></td>
     <td>255.255.255.0</td>
-    <td>192.168.11.167</td>
+    <td>192.168.11.80</td>
+    <td>unknown</td>
+    <td>unknown</td>
     <td></td>
     <td></td>
     <td></td>
     <td></td>
-    <td></td>
+    <td>22/tcp 53/tcp 111/tcp </td>
   </tr>
 
   </tbody>
@@ -615,12 +703,13 @@ var tfConfig = {
     col_5: 'select',
     col_6: 'select',
     col_7: 'select',
-    col_9: 'select',
+    col_8: 'select',
+    col_10:'select',
     mark_active_columns: true,
     rows_counter: true,
     btn_reset: true,
     status_bar: true,
-    col_widths: ["120px","120px","120px","180px","120px","120px","150px","150px","10%","30px","10%","10%"],
+    col_widths: ["120px","120px","120px","180px","120px","120px","150px","150px","100px","10%","30px","10%","10%","10%"],
     col_types: [
        'string',
        'string',
@@ -633,11 +722,12 @@ var tfConfig = {
        'string',
        'number',
        'string',
+       'string',
        'string'
        ],
     extensions: [{ name: 'sort' },
                  { name: 'colsVisibility',
-                      at_start: [0,5,9],
+                      at_start: [0,5,11,12,13,14],
                       text: 'Hide columns: ',
                       enable_tick_all: true}]
 };
