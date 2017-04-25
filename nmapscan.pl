@@ -275,13 +275,7 @@ foreach my $subnet (@subnets) {
      # Parse scan output
      foreach my $line (@data) {
           chomp($line);
-          if (($ipaddress =~ /^unknown$/) && ($line =~ /^\s*$/)) {
-               next;
-          } elsif ($line =~ /^\s*$/) {
-               # Reached end of host info: start processing host info.
-               print "IP ADDRESS=$ipaddress\n" if ($debug);
-               # clear variables for next hosts.
-               $ipaddress="unknown";
+          if ($line =~ /^\s*$/) {
                next;
           } elsif ($line =~ /Nmap\sscan\sreport\sfor\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s*/) {
                # parse IP address  
@@ -382,13 +376,13 @@ foreach my $subnet (@subnets) {
                          foreach my $info (@i) {
                               if (($t =~ /CPE/) && ((! exists $host{$ipaddress}{'os_cpe'}) || ((exists $host{$ipaddress}{'os_cpe'}) && ($host{$ipaddress}{'os_cpe'} !~ /\Q$info\E/i)))) {
                                    $host{$ipaddress}{'os_cpe'}=$info." ".($host{$ipaddress}{'os_cpe'}||"");
-                                   print "  + SERVICE_INFO/OS_CPE=$info\n" if ($debug);
+                                   print "  + SERVICE_INFO/OS_CPE=$host{$ipaddress}{'os_cpe'} -> $ipaddress\n" if ($debug);
                               } elsif (($t =~ /OSs?/) && ((! exists $host{$ipaddress}{'running'}) || ((exists $host{$ipaddress}{'running'}) && ($host{$ipaddress}{'running'} !~ /\Q$info\E/i)))) {
                                    $host{$ipaddress}{'running'}=$info." ".($host{$ipaddress}{'running'}||"");
-                                   print "  + SERVICE_INFO/RUNNING=$info\n" if ($debug);
+                                   print "  + SERVICE_INFO/RUNNING=$host{$ipaddress}{'running'} -> $ipaddress\n" if ($debug);
                               } elsif (($t =~ /Device/) && ((! exists $host{$ipaddress}{'devicetype'}) || ((exists $host{$ipaddress}{'devicetype'}) && ($host{$ipaddress}{'devicetype'} !~ /\Q$info\E/i)))) {
                                    $host{$ipaddress}{'devicetype'}=$info||$host{$ipaddress}{'devicetype'};
-                                   print "  + SERVICE_INFO/DEVICE_TYPE=$info\n" if ($debug);
+                                   print "  + SERVICE_INFO/DEVICE_TYPE=$host{$ipaddress}{'devicetype'} -> $ipaddress\n" if ($debug);
                              }
                          }
                     }
@@ -432,7 +426,7 @@ foreach my $ipaddress (sort keys %subnets) {
 sub NAME(@) {
      my $ipaddress=shift;
      my $name=$ipaddress;
-     $name=$host{$ipaddress}{'hostname'}.", ".$name if (exists $host{$ipaddress}{'hostname'});
+     $name=$host{$ipaddress}{'hostname'}."\\n".$name if (exists $host{$ipaddress}{'hostname'});
      return $name;
 }
 
@@ -457,6 +451,7 @@ foreach my $ipaddress (sort keys %subnets) {
      $latency=   $host{$ipaddress}{'latency'}           if  (exists $host{$ipaddress}{'latency'});
      $hop=       $host{$ipaddress}{'hops'}              if  (exists $host{$ipaddress}{'hops'});
      $os_cpe=    $host{$ipaddress}{'os_cpe'}            if  (exists $host{$ipaddress}{'os_cpe'});
+     print "----->os_cpe=$os_cpe  -> $ipaddress\n" if  (exists $host{$ipaddress}{'os_cpe'});
      $os_details=$host{$ipaddress}{'os_details'}        if  (exists $host{$ipaddress}{'os_details'});
      $ports=     $host{$ipaddress}{'ports'}             if  (exists $host{$ipaddress}{'ports'});
      $mac=       $host{$ipaddress}{'mac'}               if  (exists $host{$ipaddress}{'mac'});
@@ -501,7 +496,15 @@ foreach my $ipaddress (sort keys %subnets) {
      my $ostype=$o;
      $devicetype=$d;
      $running=$r." ".$running if ($r);
-      
+ 
+     #
+     # Remove cpe: and double words
+     print ">>$os_cpe<< ";
+     $os_cpe =~ s/cpe://g;
+     print ">>$os_cpe<< ";
+     $os_cpe =~ s/(\/?\b\S{4,50})\s*(.+)\1/${1}${2}\//i;
+     print ">>$os_cpe<< \n";
+     
      #
      # Gather basics, details and ports
      push(@basics, "Subnet: "     .$subnet);
@@ -533,10 +536,6 @@ foreach my $ipaddress (sort keys %subnets) {
      if ((exists $gateway{$subnets{$ipaddress}}) && (NAME($gateway{$subnets{$ipaddress}}) !~ /^${name}$/)) {
           push(@links,"{ from: \"${name}\", to: \"".NAME($gateway{$subnets{$ipaddress}})."\" }");
      }
-
-     #
-     # Remove double words
-     $os_cpe =~ s/(\b\S{4,30})(.+)\1/${1}${2}\//i;
 
      # 
      # construct html table row
@@ -807,8 +806,8 @@ diagram.model.linkDataArray = [ ];
     <th>OS type</th>
     <th>Running</th>
     <th>Hops</th>
-    <th>OC CP</th>
-    <th>OC Details</th>
+    <th>OS CP</th>
+    <th>OS Details</th>
     <th>Ports</th>
   </tr>
  </thead>
@@ -854,7 +853,7 @@ var tfConfig = {
        ],
     extensions: [{ name: 'sort' },
                  { name: 'colsVisibility',
-                      at_start: [0,5,11,12,13,14],
+                      at_start: [0,5,,10,11,12,13],
                       text: 'Hide columns: ',
                       enable_tick_all: true}]
 };
