@@ -540,7 +540,6 @@ foreach my $ipaddress (sort keys %ipall) {
           push(@basics, "MAC: "          .$mac)          if ($mac);
           push(@basics, "MAC Vendor: "   .$vendor)       if ($vendor);
           push(@basics, "OS type: "      .$ostype)       if ($ostype);
-          push(@basics, "Status: "       .$status)       if ($status);
           push(@details,"Last Scanned: " .$lastscanned)  if ($lastscanned);
           push(@details,"Times Scanned: ".$timesscanned) if ($timesscanned);
           push(@details,"Status: "       .$status)       if ($status);
@@ -882,7 +881,7 @@ diagram.model.linkDataArray = [ ];
   <tr>
     <th>Status</th>
     <th>Last Scanned</th>
-    <th>Times</th>
+    <th>Times<br>Scanned</th>
     <th>Network</th>
     <th>Host name</th>
     <th>IP Address</th> 
