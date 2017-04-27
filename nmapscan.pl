@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use Getopt::Long;
+use POSIX qw/strftime/;
 #
 # Input parameters
 my $help;
@@ -267,6 +268,20 @@ sub TraceRoute(@) {
 }
 
 #
+# Get cache files
+my %ipcache;
+my @datafiles=`find nmapdata -name '*.txt'`;
+foreach my $file (@datafiles) {
+     chomp($file);
+     my $ipaddress=$1 if ($file =~ /nmapdata\/(.+)$/);
+     $ipaddress=~s/_/\./g;
+     print "READ IP=$ipaddress\n" if ($debug);
+     next unless (exists $ip2subnet{$ipaddress});
+     $ipcache{$ipaddress}=$file;
+}
+
+
+#
 # Scan subnets 
 foreach my $subnet (@subnets) {
      print "~~~~~~~~~~~~~~~~~ Start scanning SUBNET=$subnet ~~~~~~~~~~~~~~~~~\n" if ($debug);
@@ -275,9 +290,8 @@ foreach my $subnet (@subnets) {
      # Parse scan output
      foreach my $line (@data) {
           chomp($line);
-          if ($line =~ /^\s*$/) {
-               next;
-          } elsif ($line =~ /Nmap\sscan\sreport\sfor\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s*/) {
+          next if ($line =~ /^\s*$/);
+          if ($line =~ /Nmap\sscan\sreport\sfor\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s*/) {
                # parse IP address  
                $ipaddress=$1;
                $host{$ipaddress}{'subnet'}=$subnet;
@@ -431,115 +445,186 @@ sub NAME(@) {
 }
 
 #
+# gather scanned and cached ip(s).
+my %ipall;
+foreach my $ipaddress (sort keys %subnets) {
+     $ipall{$ipaddress}=$subnets{$ipaddress};
+}
+foreach my $ipaddress (sort keys %ipcache) {
+     $ipall{$ipaddress}=$ip2subnet{$ipaddress};
+}
+
+#
 # Compose subnet and host data
 my @nodes;
 my @links;
 my $tabledata="";
-foreach my $ipaddress (sort keys %subnets) {
+foreach my $ipaddress (sort keys %ipall) {
      my @basics;
      my @details;
      my @ports;
-     my ($subnet,$hostname,$gateway,$subnetmask,$devicetype,$running,$mac,$vendor,$status,$latency,$hop,$os_cpe,$os_details,$ports,$fact,$port);
-     $subnet= $subnets{$ipaddress};
-     $gateway=   $gateway{$subnets{$ipaddress}}         if  (exists $gateway{$subnets{$ipaddress}});
-     $subnetmask=$cidr{$subnet}{'subnetmask'}           if  (exists $cidr{$subnet});
-     $hostname=  $host{$ipaddress}{'hostname'}          if  (exists $host{$ipaddress}{'hostname'});
-     $devicetype=$host{$ipaddress}{'devicetype'}        if  (exists $host{$ipaddress}{'devicetype'});
-     $running=   $host{$ipaddress}{'running'}           if  (exists $host{$ipaddress}{'running'});
-     $vendor=    $host{$ipaddress}{'vendor'}            if  (exists $host{$ipaddress}{'vendor'});
-     $status=    $host{$ipaddress}{'status'}            if  (exists $host{$ipaddress}{'status'});
-     $latency=   $host{$ipaddress}{'latency'}           if  (exists $host{$ipaddress}{'latency'});
-     $hop=       $host{$ipaddress}{'hops'}              if  (exists $host{$ipaddress}{'hops'});
-     $os_cpe=    $host{$ipaddress}{'os_cpe'}            if  (exists $host{$ipaddress}{'os_cpe'});
-     print "----->os_cpe=$os_cpe  -> $ipaddress\n" if  (exists $host{$ipaddress}{'os_cpe'});
-     $os_details=$host{$ipaddress}{'os_details'}        if  (exists $host{$ipaddress}{'os_details'});
-     $ports=     $host{$ipaddress}{'ports'}             if  (exists $host{$ipaddress}{'ports'});
-     $mac=       $host{$ipaddress}{'mac'}               if  (exists $host{$ipaddress}{'mac'});
-     $mac=       $hostmac{$ipaddress}                   if ((exists $hostmac{$ipaddress}) && (!$mac));
-     $fact=      join("\\n",@{$fact{$ipaddress}})       if ((exists $fact{$ipaddress}) && (@{$fact{$ipaddress}}));
-     $port=      join("\\n",@{$port{$ipaddress}})       if ((exists $port{$ipaddress}) && (@{$port{$ipaddress}}));
+     my ($subnet,$hostname,$name,$gateway,$subnetmask,$devicetype,$running,$mac,$vendor,$status,$latency,$hop,$os_cpe,$os_details,$ports,$fact,$port,$link,$lastscanned,$timesscanned,$color,$ostype);
+     $subnet= $ip2subnet{$ipaddress};
+     if (exists $subnets{$ipaddress}) {
+          $gateway=   $gateway{$subnets{$ipaddress}}         if  (exists $gateway{$subnets{$ipaddress}});
+          $subnetmask=$cidr{$subnet}{'subnetmask'}           if  (exists $cidr{$subnet});
+          $hostname=  $host{$ipaddress}{'hostname'}          if  (exists $host{$ipaddress}{'hostname'});
+          $devicetype=$host{$ipaddress}{'devicetype'}        if  (exists $host{$ipaddress}{'devicetype'});
+          $running=   $host{$ipaddress}{'running'}           if  (exists $host{$ipaddress}{'running'});
+          $vendor=    $host{$ipaddress}{'vendor'}            if  (exists $host{$ipaddress}{'vendor'});
+          $status=    $host{$ipaddress}{'status'}            if  (exists $host{$ipaddress}{'status'});
+          $latency=   $host{$ipaddress}{'latency'}           if  (exists $host{$ipaddress}{'latency'});
+          $hop=       $host{$ipaddress}{'hops'}              if  (exists $host{$ipaddress}{'hops'});
+          $os_cpe=    $host{$ipaddress}{'os_cpe'}            if  (exists $host{$ipaddress}{'os_cpe'});
+          $os_details=$host{$ipaddress}{'os_details'}        if  (exists $host{$ipaddress}{'os_details'});
+          $ports=     $host{$ipaddress}{'ports'}             if  (exists $host{$ipaddress}{'ports'});
+          $mac=       $host{$ipaddress}{'mac'}               if  (exists $host{$ipaddress}{'mac'});
+          $mac=       $hostmac{$ipaddress}                   if ((exists $hostmac{$ipaddress}) && (!$mac));
+          $fact=      join("\\n",@{$fact{$ipaddress}})       if ((exists $fact{$ipaddress}) && (@{$fact{$ipaddress}}));
+          $port=      join("\\n",@{$port{$ipaddress}})       if ((exists $port{$ipaddress}) && (@{$port{$ipaddress}}));
+          $lastscanned=strftime("%F %T", localtime);
 
-     #
-     # Gather host info 
-     my $info="";
-     $info.= $host{$ipaddress}{'os_cpe'}                if (exists $host{$ipaddress}{'os_cpe'});
-     $info.= $host{$ipaddress}{'os_details'}            if (exists $host{$ipaddress}{'os_details'});
-     $info.= $host{$ipaddress}{'vendor'}                if (exists $host{$ipaddress}{'vendor'});
-     $info.= $host{$ipaddress}{'devicetype'}            if (exists $host{$ipaddress}{'devicetype'});
-     $info.= $host{$ipaddress}{'http-title'}            if (exists $host{$ipaddress}{'http-title'});
-     $info.= $host{$ipaddress}{'service_info'}          if (exists $host{$ipaddress}{'service_info'});
-     $info.= $port                                      if ($port);
+          #
+          # Gather host info 
+          my $info="";
+          $info.= $host{$ipaddress}{'os_cpe'}                if (exists $host{$ipaddress}{'os_cpe'});
+          $info.= $host{$ipaddress}{'os_details'}            if (exists $host{$ipaddress}{'os_details'});
+          $info.= $host{$ipaddress}{'vendor'}                if (exists $host{$ipaddress}{'vendor'});
+          $info.= $host{$ipaddress}{'devicetype'}            if (exists $host{$ipaddress}{'devicetype'});
+          $info.= $host{$ipaddress}{'http-title'}            if (exists $host{$ipaddress}{'http-title'});
+          $info.= $host{$ipaddress}{'service_info'}          if (exists $host{$ipaddress}{'service_info'});
+          $info.= $port                                      if ($port);
 
-     #
-     # Determine color, os and hosttype
-     my ($c,$o,$d,$r)=(($host{$ipaddress}{'color'} || "gold"),"unknown",($devicetype||"unknown"));
-     ($c,$o)=   ("tomato","unknown")                    if ($info =~ /hewlett\spackard/i);
-     ($c,$o)=   ("lightgreen","unknown")                if ($info =~ /intel/i);
-     ($c,$o)=   ("lightsalmon","Linux")                 if ($info =~ /linux/i);
-     ($c,$o,$d)=("lime","IOS","media device|phone")     if ($info =~ /\bios|apple/i);
-     ($c,$o,$d)=("green","Android","phone")             if ($info =~ /android|Motorola\sMobility/i);
-     ($c,$o,$d)=("dodgerblue","Windows","general purpose") if ($info =~ /windows/i);
-     ($c,$o,$d)=("chartreuse","Linux","switch")         if ($info =~ /switch|netgear/i);
-     ($c,$o,$d)=("olivedrab","Android","phone")         if ($info =~ /oneplus/i);
-     ($c,$o,$d)=("chocolate","Linux","router")          if ($info =~ /router/i);
-     ($c,$o,$d)=("tomato","Linux","printer")            if ($info =~ /printer|laserjet/i);
-     ($c,$o,$d)=("antiquewhite","Linux","nas")          if ($info =~ /Segate\sTechnology/i);
-     ($c,$o,$r)=("orchid","Linux","Google Chrome Cast") if ($port =~ /chromecast/i);
-     ($c,$o,$d,$r)=("sienna","Linux","bridge","philips hue bridge") if ($info =~ /Philips\sHue/i);
-     ($c,$o,$r)=("yellowgreen","Linux","samsung tv")    if ($info =~ /Samsung\sAllShare/i);
-     ($c,$o,$r)=("palevioletred","Linux","QNAP")        if ($info =~ /qnap/i);
-     ($c,$o,$r)=("orangered","Linux","internet radio")  if ($info =~ /Internet\sRadio/i);
-      $c=        "lightblue"                            if ($info =~ /raspberry/i);
-      $c=        "orange"                               if  (exists $route{$ipaddress});
-      $c=        "aquamarine"                           if ((exists $gateway{$subnet}) && ($gateway{$subnet} =~ /^$ipaddress$/));
-     my $color=$c;
-     my $ostype=$o;
-     $devicetype=$d;
-     $running=$r." ".$running if ($r);
+          #
+          # Determine color, os and hosttype
+          my ($c,$o,$d,$r)=(($host{$ipaddress}{'color'} || "gold"),"unknown",($devicetype||"unknown"));
+          ($c,$o)=   ("tomato","unknown")                    if ($info =~ /hewlett\spackard/i);
+          ($c,$o)=   ("lightgreen","unknown")                if ($info =~ /intel/i);
+          ($c,$o)=   ("lightsalmon","Linux")                 if ($info =~ /linux/i);
+          ($c,$o,$d)=("lime","IOS","media device|phone")     if ($info =~ /\bios|apple/i);
+          ($c,$o,$d)=("green","Android","phone")             if ($info =~ /android|Motorola\sMobility/i);
+          ($c,$o,$d)=("dodgerblue","Windows","general purpose") if ($info =~ /windows/i);
+          ($c,$o,$d)=("chartreuse","Linux","switch")         if ($info =~ /switch|netgear/i);
+          ($c,$o,$d)=("olivedrab","Android","phone")         if ($info =~ /oneplus/i);
+          ($c,$o,$d)=("chocolate","Linux","router")          if ($info =~ /router/i);
+          ($c,$o,$d)=("tomato","Linux","printer")            if ($info =~ /printer|laserjet/i);
+          ($c,$o,$d)=("antiquewhite","Linux","nas")          if ($info =~ /Segate\sTechnology/i);
+          ($c,$o,$r)=("orchid","Linux","Google Chrome Cast") if ($port =~ /chromecast/i);
+          ($c,$o,$d,$r)=("sienna","Linux","bridge","philips hue bridge") if ($info =~ /Philips\sHue/i);
+          ($c,$o,$r)=("yellowgreen","Linux","samsung tv")    if ($info =~ /Samsung\sAllShare/i);
+          ($c,$o,$r)=("palevioletred","Linux","QNAP")        if ($info =~ /qnap/i);
+          ($c,$o,$r)=("orangered","Linux","internet radio")  if ($info =~ /Internet\sRadio/i);
+          $c=        "lightblue"                            if ($info =~ /raspberry/i);
+          $c=        "orange"                               if  (exists $route{$ipaddress});
+          $c=        "aquamarine"                           if ((exists $gateway{$subnet}) && ($gateway{$subnet} =~ /^$ipaddress$/));
+          $color=$c;
+          $ostype=$o;
+          $devicetype=$d;
+          $running=$r." ".$running if ($r);
  
-     #
-     # Remove cpe: and double words
-     print ">>$os_cpe<< ";
-     $os_cpe =~ s/cpe://g;
-     print ">>$os_cpe<< ";
-     $os_cpe =~ s/(\/?\b\S{4,50})\s*(.+)\1/${1}${2}\//i;
-     print ">>$os_cpe<< \n";
+          #
+          # Remove cpe: and double words
+          print ">>$os_cpe<< ";
+          $os_cpe =~ s/cpe://g;
+          print ">>$os_cpe<< ";
+          $os_cpe =~ s/(\/?\b\S{4,50})\s*(.+)\1/${1}${2}\//i;
+          print ">>$os_cpe<< \n";
      
-     #
-     # Gather basics, details and ports
-     push(@basics, "Subnet: "     .$subnet);
-     push(@basics, "Gateway: "    .$gateway)      if ($gateway);
-     push(@basics, "Netmask: "    .$subnetmask)   if ($subnetmask);
-     push(@basics, "Device type: ".$devicetype)   if ($devicetype);
-     push(@basics, "Running: "    .$running)      if ($running);
-     push(@basics, "MAC: "        .$mac)          if ($mac);
-     push(@basics, "MAC Vendor: " .$vendor)       if ($vendor);
-     push(@basics, "OS type: "    .$ostype)       if ($ostype);
-     push(@details,"Status: "     .$status)       if ($status);
-     push(@details,"Latency: "    .$latency)      if ($latency);
-     push(@details,"Hops: "       .$hop)          if ($hop);
-     push(@details,"OC CPE: "     .$os_cpe)       if ($os_cpe);
-     push(@details,"OS Details: " .$os_details)   if ($os_details);
-     push(@details,"Warnings: "   .$fact)         if ($fact);
-     push(@ports,                  $port)         if ($port);
+          #
+          # Gather basics, details and ports
+          push(@basics, "Subnet: "       .$subnet);
+          push(@basics, "Gateway: "      .$gateway)      if ($gateway);
+          push(@basics, "Netmask: "      .$subnetmask)   if ($subnetmask);
+          push(@basics, "Device type: "  .$devicetype)   if ($devicetype);
+          push(@basics, "Running: "      .$running)      if ($running);
+          push(@basics, "MAC: "          .$mac)          if ($mac);
+          push(@basics, "MAC Vendor: "   .$vendor)       if ($vendor);
+          push(@basics, "OS type: "      .$ostype)       if ($ostype);
+          push(@basics, "Status: "       .$status)       if ($status);
+          push(@details,"Last Scanned: " .$lastscanned)  if ($lastscanned);
+          push(@details,"Times Scanned: ".$timesscanned) if ($timesscanned);
+          push(@details,"Status: "       .$status)       if ($status);
+          push(@details,"Latency: "      .$latency)      if ($latency);
+          push(@details,"Hops: "         .$hop)          if ($hop);
+          push(@details,"OC CPE: "       .$os_cpe)       if ($os_cpe);
+          push(@details,"OS Details: "   .$os_details)   if ($os_details);
+          push(@details,"Warnings: "     .$fact)         if ($fact);
+          push(@ports,                    $port)         if ($port);
+
+          #
+          # IP address and hostname
+          $name=NAME($ipaddress);
+     }
 
      #
-     # IP address and hostname
-     my $name=NAME($ipaddress);
-
-     # 
-     # Save host objects
-     push(@nodes,"{ key:  \"${name}\", basics: \"".join("\\n",@basics)."\", details: \"".join("\\n",@details)."\",ports: \"".join("\\n",@ports)."\", color: \"$color\", category: \"name\" }");
+     # Read host object from file
+     if (exists $ipcache{$ipaddress}) {
+          my $file=$ipcache{$ipaddress};
+          my @file=`cat $file`;
+          foreach my $line (@file) {
+               chomp($line);
+               next if ($line=~/^\s*$/);
+               $line=~s/NEWLINE/\/n/g;
+               my @var=split(/##/,$line);
+               foreach my $var (@var) {
+                    if (exists $subnets{$ipaddress}) {
+			    $timesscanned+=$1 if ($var =~ /TIMESSCANNED:^(.+)$/);
+                    } else {
+                            @basics     =split(/@@/,$1) if ($var =~ /BASICS:^(.+)$/);
+                            @details    =split(/@@/,$1) if ($var =~ /DETAILS:^(.+)$/);
+                            @ports      =split(/@@/,$1) if ($var =~ /PORTS:^(.+)$/);
+                            $name       =$1             if ($var =~ /NAME:^(.+)$/);
+                            $color      =$1             if ($var =~ /COLOR:^(.+)$/);
+                            $subnet     =$1             if ($var =~ /SUBNET:^(.+)$/);
+                            $hostname   =$1             if ($var =~ /HOSTNAME:^(.+)$/);
+                            $mac        =$1             if ($var =~ /MAC:^(.+)$/);
+                            $vendor     =$1             if ($var =~ /VENDOR:^(.+)$/);
+                            $subnetmask =$1             if ($var =~ /SUBNETMASK:^(.+)$/);
+                            $gateway    =$1             if ($var =~ /GATEWAY:^(.+)$/);
+                            $devicetype =$1             if ($var =~ /DEVICETYPE:^(.+)$/);
+                            $ostype     =$1             if ($var =~ /OSTYPE:^(.+)$/);
+                            $running    =$1             if ($var =~ /RUNNING:^(.+)$/);
+                            $hop        =$1             if ($var =~ /HOP:^(.+)$/);
+                            $os_cpe     =$1             if ($var =~ /OS_CPE:^(.+)$/);
+                            $os_details =$1             if ($var =~ /OS_DETAILS:^(.+)$/);
+                            $ports      =$1             if ($var =~ /PORTS:^(.+)$/);
+                            $lastscanned=$1             if ($var =~ /LASTSCANNED:^(.+)$/);
+                            $timesscanned=$1            if ($var =~ /TIMESSCANNED:^(.+)$/);
+                            $link       =$1             if ($var =~ /LINK:^(.+)$/);
+                            $status     ="down";
+                    }
+               }
+          }
+     }
 
      #
      # Save links between hostobjects
      if ((exists $gateway{$subnets{$ipaddress}}) && (NAME($gateway{$subnets{$ipaddress}}) !~ /^${name}$/)) {
-          push(@links,"{ from: \"${name}\", to: \"".NAME($gateway{$subnets{$ipaddress}})."\" }");
+          $link="{ from: \"${name}\", to: \"".NAME($gateway{$subnets{$ipaddress}})."\" }";
+          push(@links,$link);
      }
+
+     # 
+     # Store host objects
+     push(@nodes,"{ key:  \"${name}\", basics: \"".join("\\n",@basics)."\", details: \"".join("\\n",@details)."\",ports: \"".join("\\n",@ports)."\", color: \"$color\", category: \"name\" }");
+
+     #
+     # Write to file
+     my $output="##BASICS:".join("@@",@basics)."##DETAILS:".join("@@",@details)."##PORTS:".join("@@",@ports)."##NAME:".$name."##COLOR:".$color."##SUBNET:".$subnet."##HOSTNAME:".($hostname||"")."##MAC:".($mac||"")."##VENDOR:".($vendor||"")."##SUBNETMASK:".($subnetmask||"")."##GATEWAY:".($gateway||"")."##DEVICETYPE:".($devicetype||"")."##OSTYPE:".($ostype||"")."##RUNNING:".($running||"")."##HOP".($hop||"")."##OS_CPE:".($os_cpe||"")."##OS_DETAILS:".($os_details||"")."##PORTS:".($ports||"")."##LINK:".($link||"")."##LASTSCANNED:".($lastscanned||"")."##TIMESSCANNED:".($timesscanned||1)."##";
+     $output=~s/\Q\n\E/NEWLINE/g;
+     my $datafile="nmapdata/$ipaddress";
+     $datafile=~s/\./_/g;
+     $datafile.=".txt";
+     open my $out, '>', "$datafile"     or die "Can't write '$datafile' file: $!";
+     print $out $output;
+     close $out;
 
      # 
      # construct html table row
      $tabledata.='  <tr bgcolor="'.$color.'">
+    <td>'.($status||"").'</td>
+    <td>'.($lastscanned||"").'</td>
+    <td>'.($timesscanned||"").'</td>
     <td>'.($subnet||"").'</td>
     <td>'.($hostname||"").'</td>
     <td>'.($ipaddress||"").'</td>
@@ -795,6 +880,9 @@ diagram.model.linkDataArray = [ ];
 <table id="hosts" style="width:100%">
  <thead>
   <tr>
+    <th>Status</th>
+    <th>Last Scanned</th>
+    <th>Times</th>
     <th>Network</th>
     <th>Host name</th>
     <th>IP Address</th> 
@@ -825,18 +913,22 @@ var tfConfig = {
     no_results_message: true,
     base_path: './tablefilter/',
     col_0: 'select',
-    col_4: 'select',
-    col_5: 'select',
-    col_6: 'select',
+    col_3: 'select',
     col_7: 'select',
     col_8: 'select',
-    col_10:'select',
+    col_9: 'select',
+    col_10: 'select',
+    col_11: 'select',
+    col_13:'select',
     mark_active_columns: true,
     rows_counter: true,
     btn_reset: true,
     status_bar: true,
-    col_widths: ["120px","120px","120px","180px","120px","120px","150px","150px","100px","10%","30px","10%","10%","10%"],
+    col_widths: ["30px","120","30px","120px","120px","120px","180px","120px","120px","150px","150px","100px","10%","30px","10%","10%","10%"],
     col_types: [
+       'number',
+       'string',
+       'number',
        'string',
        'string',
        'ipaddress',
@@ -853,7 +945,7 @@ var tfConfig = {
        ],
     extensions: [{ name: 'sort' },
                  { name: 'colsVisibility',
-                      at_start: [0,5,,10,11,12,13],
+                      at_start: [1,2,3,8,13,14,15,16],
                       text: 'Hide columns: ',
                       enable_tick_all: true}]
 };
