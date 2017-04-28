@@ -269,6 +269,7 @@ sub TraceRoute(@) {
 
 #
 # Get cache files
+mkdir("nmapdata");
 my %ipcache;
 my @datafiles=`find nmapdata -name '*.txt'`;
 foreach my $file (@datafiles) {
@@ -632,10 +633,10 @@ foreach my $ipaddress (sort keys %ipall) {
 
      #
      # Save links between hostobjects
-     if ((exists $gateway{$ipall{$ipaddress}}) && (NAME($gateway{$ipall{$ipaddress}}) !~ /^${name}$/)) {
-          $link="{ from: \"${name}\", to: \"".NAME($gateway{$ipall{$ipaddress}})."\" }";
+     if ($link) {
           push(@links,$link);
-     } elsif ($link) {
+     } elsif ((exists $gateway{$ipall{$ipaddress}}) && (NAME($gateway{$ipall{$ipaddress}}) !~ /^${name}$/)) {
+          $link="{ from: \"${name}\", to: \"".NAME($gateway{$ipall{$ipaddress}})."\" }";
           push(@links,$link);
      }
 
@@ -646,7 +647,28 @@ foreach my $ipaddress (sort keys %ipall) {
      #
      # Write to file
      if (exists $subnets{$ipaddress}) {
-          my $output="##BASICS:".join("@@",@basics)."##DETAILS:".join("@@",@details)."##PORTS:".join("@@",@ports)."##NAME:".$name."##COLOR:".$color."##SUBNET:".$subnet."##HOSTNAME:".($hostname||"")."##MAC:".($mac||"")."##VENDOR:".($vendor||"")."##SUBNETMASK:".($subnetmask||"")."##GATEWAY:".($gateway||"")."##DEVICETYPE:".($devicetype||"")."##OSTYPE:".($ostype||"")."##RUNNING:".($running||"")."##HOP:".($hop||"")."##OS_CPE:".($os_cpe||"")."##OS_DETAILS:".($os_details||"")."##PORTS:".($ports||"")."##LINK:".($link||"")."##FIRSTSCANNED:".($firstscanned||strftime("%F %T", localtime))."##LASTSCANNED:".($lastscanned||strftime("%F %T", localtime))."##TIMESSCANNED:".($timesscanned||1)."##";
+          my $output="##BASICS:" .join("@@",@basics).
+                     "##DETAILS:".join("@@",@details).
+                     "##PORTS:"  .join("@@",@ports).
+                     "##NAME:"        .$name.
+                     "##COLOR:"       .$color.
+                     "##SUBNET:"      .$subnet.
+                     "##HOSTNAME:"    .($hostname||"").
+                     "##MAC:"         .($mac||"").
+                     "##VENDOR:"      .($vendor||"").
+                     "##SUBNETMASK:"  .($subnetmask||"").
+                     "##GATEWAY:"     .($gateway||"").
+                     "##DEVICETYPE:"  .($devicetype||"").
+                     "##OSTYPE:"      .($ostype||"").
+                     "##RUNNING:"     .($running||"").
+                     "##HOP:"         .($hop||"").
+                     "##OS_CPE:"      .($os_cpe||"").
+                     "##OS_DETAILS:"  .($os_details||"").
+                     "##PORTS:"       .($ports||"").
+                     "##LINK:"        .($link||"").
+                     "##FIRSTSCANNED:".($firstscanned||strftime("%F %T", localtime)).
+                     "##LASTSCANNED:" .($lastscanned||strftime("%F %T", localtime)).
+                     "##TIMESSCANNED:".($timesscanned||1)."##";
           $output=~s/\Q\n\E/NEWLINE/g;
           my $datafile="nmapdata/$ipaddress";
           $datafile=~s/\./_/g;
