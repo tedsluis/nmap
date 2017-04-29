@@ -450,11 +450,11 @@ sub NAME(@) {
 # gather scanned and cached ip(s).
 my %ipall;
 foreach my $ipaddress (sort keys %subnets) {
-     print "ipaddress=$ipaddress,subnet=$subnets{$ipaddress}\n";
+     print "ipaddress=$ipaddress,subnet=$subnets{$ipaddress}\n"   if ($debug);
      $ipall{$ipaddress}=$subnets{$ipaddress};
 }
 foreach my $ipaddress (sort keys %ipcache) {
-     print "ipaddress=$ipaddress,subnet=$ip2subnet{$ipaddress}\n";
+     print "ipaddress=$ipaddress,subnet=$ip2subnet{$ipaddress}\n" if ($debug);
      $ipall{$ipaddress}=$ip2subnet{$ipaddress};
 }
 
@@ -464,8 +464,8 @@ my @nodes;
 my @links;
 my $tabledata="";
 foreach my $ipaddress (sort keys %ipall) {
-     print "-------------->> $ipaddress is scanned\n" if (exists $subnets{$ipaddress});
-     print "-------------->> $ipaddress is cached\n" if (exists $ipcache{$ipaddress});
+     print "-------------->> $ipaddress is scanned\n" if ((exists $subnets{$ipaddress}) && ($debug));
+     print "-------------->> $ipaddress is cached\n"  if ((exists $ipcache{$ipaddress}) && ($debug));
      my @basics;
      my @details;
      my @ports;
@@ -521,9 +521,9 @@ foreach my $ipaddress (sort keys %ipall) {
           ($c,$o,$r)=("yellowgreen","Linux","samsung tv")    if ($info =~ /Samsung\sAllShare/i);
           ($c,$o,$r)=("palevioletred","Linux","QNAP")        if ($info =~ /qnap/i);
           ($c,$o,$r)=("orangered","Linux","internet radio")  if ($info =~ /Internet\sRadio/i);
-          $c=        "lightblue"                            if ($info =~ /raspberry/i);
-          $c=        "orange"                               if  (exists $route{$ipaddress});
-          $c=        "aquamarine"                           if ((exists $gateway{$subnet}) && ($gateway{$subnet} =~ /^$ipaddress$/));
+          $c=        "lightblue"                             if ($info =~ /raspberry/i);
+          $c=        "orange"                                if  (exists $route{$ipaddress});
+          $c=        "aquamarine"                            if ((exists $gateway{$subnet}) && ($gateway{$subnet} =~ /^$ipaddress$/));
           $color=$c;
           $ostype=$o;
           $devicetype=$d;
@@ -531,11 +531,11 @@ foreach my $ipaddress (sort keys %ipall) {
  
           #
           # Remove cpe: and double words
-          print ">>$os_cpe<< ";
+          print ">>$os_cpe<< "   if ($debug);
           $os_cpe =~ s/cpe://g;
-          print ">>$os_cpe<< ";
+          print ">>$os_cpe<< "   if ($debug);
           $os_cpe =~ s/(\/?\b\S{4,50})\s*(.+)\1/${1}${2}\//i;
-          print ">>$os_cpe<< \n";
+          print ">>$os_cpe<< \n" if ($debug);
      
           #
           # Gather basics, details and ports
@@ -585,8 +585,8 @@ foreach my $ipaddress (sort keys %ipall) {
 			 if ((($h) && ($hostname)   && ($h !~ /^$hostname$/))   ||
                              (($m) && ($mac)        && ($m !~ /^$mac$/))        ||
                              (($d) && ($devicetype) && ($d !~ /^$devicetype$/)) ||
-                             (($r) && ($running)    && ($r !~ /^running$/))) {
-                              print "Cache file does not match scanned host $ipaddress! \n" if ($debug);
+                             (($r) && ($running)    && ($r !~ /^$running$/))) {
+                              print "Cache file does not match scanned host $ipaddress! Cache file $file will be removed!\n" if ($debug);
                               unlink($file);
                          } else {
                               $timesscanned=$1+1 if ($var =~ /TIMESSCANNED:(.+)$/);
@@ -599,36 +599,36 @@ foreach my $ipaddress (sort keys %ipall) {
                     } else {
                          #
                          # Host is down
-                         @basics     =split(/@@/,$1) if ($var =~ /BASICS:(.+)$/);
-                         @details    =split(/@@/,$1) if ($var =~ /DETAILS:(.+)$/);
-                         @ports      =split(/@@/,$1) if ($var =~ /PORTS:(.+)$/);
+                         @basics      =split(/@@/,$1) if ($var =~ /BASICS:(.+)$/);
+                         @details     =split(/@@/,$1) if ($var =~ /DETAILS:(.+)$/);
+                         @ports       =split(/@@/,$1) if ($var =~ /PORTS:(.+)$/);
+                         $name        =$1             if ($var =~ /NAME:(.+)$/);
+                         $color       =$1             if ($var =~ /COLOR:(.+)$/);
+                         $subnet      =$1             if ($var =~ /SUBNET:(.+)$/);
+                         $hostname    =$1             if ($var =~ /HOSTNAME:(.+)$/);
+                         $mac         =$1             if ($var =~ /MAC:(.+)$/);
+                         $vendor      =$1             if ($var =~ /VENDOR:(.+)$/);
+                         $subnetmask  =$1             if ($var =~ /SUBNETMASK:(.+)$/);
+                         $gateway     =$1             if ($var =~ /GATEWAY:(.+)$/);
+                         $devicetype  =$1             if ($var =~ /DEVICETYPE:(.+)$/);
+                         $ostype      =$1             if ($var =~ /OSTYPE:(.+)$/);
+                         $running     =$1             if ($var =~ /RUNNING:(.+)$/);
+                         $hop         =$1             if ($var =~ /HOP:(.+)$/);
+                         $os_cpe      =$1             if ($var =~ /OS_CPE:(.+)$/);
+                         $os_details  =$1             if ($var =~ /OS_DETAILS:(.+)$/);
+                         $ports       =$1             if ($var =~ /PORTS:(.+)$/);
+                         $firstscanned=$1             if ($var =~ /FIRSTSCANNED:(.+)$/);
+                         $lastscanned =$1             if ($var =~ /LASTSCANNED:(.+)$/);
+                         $timesscanned=$1             if ($var =~ /TIMESSCANNED:(.+)$/);
+                         $link        =$1             if ($var =~ /LINK:(.+)$/);
+                         $status      ="down";
                          foreach my $index (0 .. $#details) {
                               $details[$index]=~s/Status:\s.+$/Status:\sdown/g;
                          }
-                         $name        =$1            if ($var =~ /NAME:(.+)$/);
-                         $color       =$1            if ($var =~ /COLOR:(.+)$/);
-                         $subnet      =$1            if ($var =~ /SUBNET:(.+)$/);
-                         $hostname    =$1            if ($var =~ /HOSTNAME:(.+)$/);
-                         $mac         =$1            if ($var =~ /MAC:(.+)$/);
-                         $vendor      =$1            if ($var =~ /VENDOR:(.+)$/);
-                         $subnetmask  =$1            if ($var =~ /SUBNETMASK:(.+)$/);
-                         $gateway     =$1            if ($var =~ /GATEWAY:(.+)$/);
-                         $devicetype  =$1            if ($var =~ /DEVICETYPE:(.+)$/);
-                         $ostype      =$1            if ($var =~ /OSTYPE:(.+)$/);
-                         $running     =$1            if ($var =~ /RUNNING:(.+)$/);
-                         $hop         =$1            if ($var =~ /HOP:(.+)$/);
-                         $os_cpe      =$1            if ($var =~ /OS_CPE:(.+)$/);
-                         $os_details  =$1            if ($var =~ /OS_DETAILS:(.+)$/);
-                         $ports       =$1            if ($var =~ /PORTS:(.+)$/);
-                         $firstscanned=$1            if ($var =~ /FIRSTSCANNED:(.+)$/);
-                         $lastscanned =$1            if ($var =~ /LASTSCANNED:(.+)$/);
-                         $timesscanned=$1            if ($var =~ /TIMESSCANNED:(.+)$/);
-                         $link        =$1            if ($var =~ /LINK:(.+)$/);
-                         $status      ="down";
                     }
                }
           }
-          print "IPADDRESS=$ipaddress, TIMES_SCANNED=$timesscanned, FIRST_SCANNED=$firstscanned, LAST_SCANNED=$lastscanned, STATUS=$status, FILE=$file\n";
+          print "IPADDRESS=$ipaddress, TIMES_SCANNED=$timesscanned, FIRST_SCANNED=$firstscanned, LAST_SCANNED=$lastscanned, STATUS=$status, FILE=$file\n" if ($debug);
      }
 
      #
@@ -645,35 +645,35 @@ foreach my $ipaddress (sort keys %ipall) {
      push(@nodes,"{ key:  \"${name}\", basics: \"".join("\\n",@basics)."\", details: \"".join("\\n",@details)."\",ports: \"".join("\\n",@ports)."\", color: \"$color\", category: \"name\" }");
 
      #
-     # Write to file
+     # Write to cache file
      if (exists $subnets{$ipaddress}) {
-          my $output="##BASICS:" .join("@@",@basics).
-                     "##DETAILS:".join("@@",@details).
-                     "##PORTS:"  .join("@@",@ports).
+          my $output="##BASICS:"      .join("@@",@basics).
+                     "##DETAILS:"     .join("@@",@details).
+                     "##PORTS:"       .join("@@",@ports).
                      "##NAME:"        .$name.
                      "##COLOR:"       .$color.
                      "##SUBNET:"      .$subnet.
-                     "##HOSTNAME:"    .($hostname||"").
-                     "##MAC:"         .($mac||"").
-                     "##VENDOR:"      .($vendor||"").
-                     "##SUBNETMASK:"  .($subnetmask||"").
-                     "##GATEWAY:"     .($gateway||"").
-                     "##DEVICETYPE:"  .($devicetype||"").
-                     "##OSTYPE:"      .($ostype||"").
-                     "##RUNNING:"     .($running||"").
-                     "##HOP:"         .($hop||"").
-                     "##OS_CPE:"      .($os_cpe||"").
-                     "##OS_DETAILS:"  .($os_details||"").
-                     "##PORTS:"       .($ports||"").
-                     "##LINK:"        .($link||"").
+                     "##HOSTNAME:"    .($hostname    ||"").
+                     "##MAC:"         .($mac         ||"").
+                     "##VENDOR:"      .($vendor      ||"").
+                     "##SUBNETMASK:"  .($subnetmask  ||"").
+                     "##GATEWAY:"     .($gateway     ||"").
+                     "##DEVICETYPE:"  .($devicetype  ||"").
+                     "##OSTYPE:"      .($ostype      ||"").
+                     "##RUNNING:"     .($running     ||"").
+                     "##HOP:"         .($hop         ||"").
+                     "##OS_CPE:"      .($os_cpe      ||"").
+                     "##OS_DETAILS:"  .($os_details  ||"").
+                     "##PORTS:"       .($ports       ||"").
+                     "##LINK:"        .($link        ||"").
                      "##FIRSTSCANNED:".($firstscanned||strftime("%F %T", localtime)).
-                     "##LASTSCANNED:" .($lastscanned||strftime("%F %T", localtime)).
+                     "##LASTSCANNED:" .($lastscanned ||strftime("%F %T", localtime)).
                      "##TIMESSCANNED:".($timesscanned||1)."##";
           $output=~s/\Q\n\E/NEWLINE/g;
           my $datafile="nmapdata/$ipaddress";
           $datafile=~s/\./_/g;
           $datafile.=".txt";
-          open my $out, '>', "$datafile"     or die "Can't write '$datafile' file: $!";
+          open my $out, '>', "$datafile" or die "Can't write '$datafile' file: $!";
           print $out $output;
           close $out;
      }
@@ -681,24 +681,24 @@ foreach my $ipaddress (sort keys %ipall) {
      # 
      # construct html table row
      $tabledata.='  <tr bgcolor="'.$color.'">
-    <td>'.($status||"").'</td>
-    <td>'.($firstscanned||"").'</td>
-    <td>'.($lastscanned||"").'</td>
+    <td>'.($status      ||"" ).'</td>
+    <td>'.($firstscanned||"" ).'</td>
+    <td>'.($lastscanned ||"" ).'</td>
     <td>'.($timesscanned||"1").'</td>
-    <td>'.($subnet||"").'</td>
-    <td>'.($hostname||"").'</td>
-    <td>'.($ipaddress||"").'</td>
-    <td>'.($mac||"").'</td>
-    <td>'.($vendor||"").'</td>
-    <td>'.($subnetmask||"").'</td>
-    <td>'.($gateway||"").'</td>
-    <td>'.($devicetype||"").'</td>
-    <td>'.($ostype||"").'</td>
-    <td>'.($running).'</td>
-    <td>'.($hop||"").'</td>
-    <td>'.($os_cpe||"").'</td>
-    <td>'.($os_details||"").'</td>
-    <td>'.($ports||"").'</td>
+    <td>'.($subnet      ||"" ).'</td>
+    <td>'.($hostname    ||"" ).'</td>
+    <td>'.($ipaddress   ||"" ).'</td>
+    <td>'.($mac         ||"" ).'</td>
+    <td>'.($vendor      ||"" ).'</td>
+    <td>'.($subnetmask  ||"" ).'</td>
+    <td>'.($gateway     ||"" ).'</td>
+    <td>'.($devicetype  ||"" ).'</td>
+    <td>'.($ostype      ||"" ).'</td>
+    <td>'.($running     ||"" ).'</td>
+    <td>'.($hop         ||"" ).'</td>
+    <td>'.($os_cpe      ||"" ).'</td>
+    <td>'.($os_details  ||"" ).'</td>
+    <td>'.($ports       ||"" ).'</td>
   </tr>
 ';
 }
@@ -728,7 +728,7 @@ my $node= "diagram.model.nodeDataArray = [".join(",",@nodes)."];";
 my $link= "diagram.model.linkDataArray = [".join(",",@links)."];";
 #
 # Open output file
-open my $out, '>', "map.html"     or die "Can't write map.html file: $!";
+open my $out, '>', "map.html" or die "Can't write map.html file: $!";
 #
 # Read html data from __DATA__
 while( <DATA> )
