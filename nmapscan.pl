@@ -447,6 +447,14 @@ sub NAME(@) {
 }
 
 #
+# replace NEWLINE with /n 
+sub nl(@) {
+     my $line=shift;
+     $line=~s/NEWLINE/\/n/g;
+     return $line;
+}
+
+#
 # gather scanned and cached ip(s).
 my %ipall;
 foreach my $ipaddress (sort keys %subnets) {
@@ -623,7 +631,7 @@ foreach my $ipaddress (sort keys %ipall) {
                          $link        =$1             if ($var =~ /LINK:(.+)$/);
                          $status      ="down";
                          foreach my $index (0 .. $#details) {
-                              $details[$index]=~s/Status:\s.+$/Status:\sdown/g;
+                              $details[$index]=~s/Status:\s.+$/Status:down/g;
                          }
                     }
                }
