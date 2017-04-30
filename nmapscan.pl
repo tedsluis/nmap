@@ -447,14 +447,6 @@ sub NAME(@) {
 }
 
 #
-# replace NEWLINE with /n 
-sub nl(@) {
-     my $line=shift;
-     $line=~s/NEWLINE/\/n/g;
-     return $line;
-}
-
-#
 # gather scanned and cached ip(s).
 my %ipall;
 foreach my $ipaddress (sort keys %subnets) {
@@ -485,16 +477,20 @@ foreach my $ipaddress (sort keys %ipall) {
           $hostname=  $host{$ipaddress}{'hostname'}          if  (exists $host{$ipaddress}{'hostname'});
           $devicetype=$host{$ipaddress}{'devicetype'}        if  (exists $host{$ipaddress}{'devicetype'});
           $running=   $host{$ipaddress}{'running'}           if  (exists $host{$ipaddress}{'running'});
+	  $running=~  s/(.{45,60}[^\s,]+)[\s,]+/$1\\n/g;
           $vendor=    $host{$ipaddress}{'vendor'}            if  (exists $host{$ipaddress}{'vendor'});
           $status=    $host{$ipaddress}{'status'}||"up";
           $latency=   $host{$ipaddress}{'latency'}           if  (exists $host{$ipaddress}{'latency'});
           $hop=       $host{$ipaddress}{'hops'}              if  (exists $host{$ipaddress}{'hops'});
           $os_cpe=    $host{$ipaddress}{'os_cpe'}            if  (exists $host{$ipaddress}{'os_cpe'});
+	  $os_cpe=~   s/(.{45,60}[^\s,]+)[\s,]+/$1\\n/g;
           $os_details=$host{$ipaddress}{'os_details'}        if  (exists $host{$ipaddress}{'os_details'});
+	  $os_details=~s/(.{45,60}[^\s,]+)[\s,]+/$1\\n/g;
           $ports=     $host{$ipaddress}{'ports'}             if  (exists $host{$ipaddress}{'ports'});
           $mac=       $host{$ipaddress}{'mac'}               if  (exists $host{$ipaddress}{'mac'});
           $mac=       $hostmac{$ipaddress}                   if ((exists $hostmac{$ipaddress}) && (!$mac));
           $fact=      join("\\n",@{$fact{$ipaddress}})       if ((exists $fact{$ipaddress}) && (@{$fact{$ipaddress}}));
+	  $fact=~     s/(.{45,60}[^\s,]+)[\s,]+/$1\\n/g;
           $port=      join("\\n",@{$port{$ipaddress}})       if ((exists $port{$ipaddress}) && (@{$port{$ipaddress}}));
           $firstscanned=strftime("%F %T", localtime);
           $lastscanned= strftime("%F %T", localtime);
@@ -557,7 +553,7 @@ foreach my $ipaddress (sort keys %ipall) {
           push(@basics, "OS type: "      .$ostype)       if ($ostype);
           push(@details,"First Scanned: ".$firstscanned) if ($firstscanned);
           push(@details,"Last Scanned: " .$lastscanned)  if ($lastscanned);
-          push(@details,"Times Scanned: ".($timesscanned||"first time"));
+          push(@details,"Times Scanned: "."first time");
           push(@details,"Status: "       .$status)       if ($status);
           push(@details,"Latency: "      .$latency)      if ($latency);
           push(@details,"Hops: "         .$hop)          if ($hop);
@@ -580,9 +576,10 @@ foreach my $ipaddress (sort keys %ipall) {
           foreach my $line (@file) {
                chomp($line);
                next if ($line=~/^\s*$/);
-               $line=~s/NEWLINE/\/n/g;
                my @var=split(/##/,$line);
                foreach my $var (@var) {
+                    $var=~s/NEWLINE/\\n/g;
+		    print "VAR=>>$var<<\n";
                     if (exists $subnets{$ipaddress}) {
                          #
                          # Host is scanned
@@ -600,17 +597,17 @@ foreach my $ipaddress (sort keys %ipall) {
                               $timesscanned=$1+1 if ($var =~ /TIMESSCANNED:(.+)$/);
                               $firstscanned=$1   if ($var =~ /FIRSTSCANNED:(.+)$/);
                               foreach my $index (0 .. $#details) {
-                                   $details[$index]=~s/Times\sScanned:\s.+$/Times\sScanned:\s$timesscanned/g;
-                                   $details[$index]=~s/First\sScanned:\s.+$/First\sScanned:\s$firstscanned/g;
+                                   $details[$index]=~s/Times\sScanned:.*$/Times Scanned: $timesscanned/g;
+                                   $details[$index]=~s/First\sScanned:\s.+$/First Scanned: $firstscanned/g;
                               }
                          }
                     } else {
                          #
                          # Host is down
-                         @basics      =split(/@@/,$1) if ($var =~ /BASICS:(.+)$/);
-                         @details     =split(/@@/,$1) if ($var =~ /DETAILS:(.+)$/);
-                         @ports       =split(/@@/,$1) if ($var =~ /PORTS:(.+)$/);
-                         $name        =$1             if ($var =~ /NAME:(.+)$/);
+                         @basics      =split(/@@/,$1) if ($var =~ /BASICS:(.+)\z/sm);
+                         @details     =split(/@@/,$1) if ($var =~ /DETAILS:(.+)\z/sm);
+                         @ports       =split(/@@/,$1) if ($var =~ /PORTS:(.+)\z/sm);
+                         $name        =$1             if ($var =~ /^NAME:(.+)\z/sm);
                          $color       =$1             if ($var =~ /COLOR:(.+)$/);
                          $subnet      =$1             if ($var =~ /SUBNET:(.+)$/);
                          $hostname    =$1             if ($var =~ /HOSTNAME:(.+)$/);
@@ -622,16 +619,16 @@ foreach my $ipaddress (sort keys %ipall) {
                          $ostype      =$1             if ($var =~ /OSTYPE:(.+)$/);
                          $running     =$1             if ($var =~ /RUNNING:(.+)$/);
                          $hop         =$1             if ($var =~ /HOP:(.+)$/);
-                         $os_cpe      =$1             if ($var =~ /OS_CPE:(.+)$/);
-                         $os_details  =$1             if ($var =~ /OS_DETAILS:(.+)$/);
-                         $ports       =$1             if ($var =~ /PORTS:(.+)$/);
+                         $os_cpe      =$1             if ($var =~ /OS_CPE:(.+)\z/sm);
+                         $os_details  =$1             if ($var =~ /OS_DETAILS:(.+)\z/sm);
+                         $ports       =$1             if ($var =~ /PORTS:(.+)\z/sm);
                          $firstscanned=$1             if ($var =~ /FIRSTSCANNED:(.+)$/);
                          $lastscanned =$1             if ($var =~ /LASTSCANNED:(.+)$/);
                          $timesscanned=$1             if ($var =~ /TIMESSCANNED:(.+)$/);
-                         $link        =$1             if ($var =~ /LINK:(.+)$/);
+                         $link        =$1             if ($var =~ /LINK:(.+)\z/sm);
                          $status      ="down";
                          foreach my $index (0 .. $#details) {
-                              $details[$index]=~s/Status:\s.+$/Status:down/g;
+                              $details[$index]=~s/Status:\s.+$/Status: down/g;
                          }
                     }
                }
@@ -642,10 +639,14 @@ foreach my $ipaddress (sort keys %ipall) {
      #
      # Save links between hostobjects
      if ($link) {
+          print "PUSH LINK FROM CACHE: -->>$link<<-- \nNAME: -->>$name<<--\n";
           push(@links,$link);
-     } elsif ((exists $gateway{$ipall{$ipaddress}}) && (NAME($gateway{$ipall{$ipaddress}}) !~ /^${name}$/)) {
+     } elsif ((exists $gateway{$ipall{$ipaddress}}) && (NAME($gateway{$ipall{$ipaddress}}) !~ /\A${name}\z/sm)) {
           $link="{ from: \"${name}\", to: \"".NAME($gateway{$ipall{$ipaddress}})."\" }";
+          print "PUSH NEW CREATED LINK: -->>$link<<--\nNAME: -->>$name<<--\n";
           push(@links,$link);
+     } else {
+          print "NO LINK PUSHED! NAME [".NAME($gateway{$ipall{$ipaddress}})."] matches [".$name."]!\n";
      }
 
      # 
@@ -677,7 +678,7 @@ foreach my $ipaddress (sort keys %ipall) {
                      "##FIRSTSCANNED:".($firstscanned||strftime("%F %T", localtime)).
                      "##LASTSCANNED:" .($lastscanned ||strftime("%F %T", localtime)).
                      "##TIMESSCANNED:".($timesscanned||1)."##";
-          $output=~s/\Q\n\E/NEWLINE/g;
+          $output=~s/\Q\n\E/NEWLINE/gm;
           my $datafile="nmapdata/$ipaddress";
           $datafile=~s/\./_/g;
           $datafile.=".txt";
