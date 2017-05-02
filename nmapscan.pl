@@ -469,7 +469,7 @@ foreach my $ipaddress (sort keys %ipall) {
      my @basics;
      my @details;
      my @ports;
-     my ($subnet,$hostname,$name,$gateway,$subnetmask,$devicetype,$running,$mac,$vendor,$status,$latency,$hop,$os_cpe,$os_details,$ports,$fact,$port,$link,$firstscanned,$lastscanned,$timesscanned,$color,$ostype);
+     my ($subnet,$hostname,$name,$gateway,$subnetmask,$devicetype,$running,$mac,$vendor,$status,$latency,$hop,$os_cpe,$os_details,$ports,$fact,$port,$link,$firstscanned,$lastscanned,$timesscanned,$totalscans,$color,$ostype);
      $subnet= $ip2subnet{$ipaddress};
      if (exists $subnets{$ipaddress}) {
           $gateway=   $gateway{$subnets{$ipaddress}}         if  (exists $gateway{$subnets{$ipaddress}});
@@ -477,20 +477,20 @@ foreach my $ipaddress (sort keys %ipall) {
           $hostname=  $host{$ipaddress}{'hostname'}          if  (exists $host{$ipaddress}{'hostname'});
           $devicetype=$host{$ipaddress}{'devicetype'}        if  (exists $host{$ipaddress}{'devicetype'});
           $running=   $host{$ipaddress}{'running'}           if  (exists $host{$ipaddress}{'running'});
-	  $running=~  s/(.{45,60}[^\s,]+)[\s,]+/$1\\n/g;
+          $running=~  s/(.{45,60}[^\s,]+)[\s,]+/$1\\n/g;
           $vendor=    $host{$ipaddress}{'vendor'}            if  (exists $host{$ipaddress}{'vendor'});
           $status=    $host{$ipaddress}{'status'}||"up";
           $latency=   $host{$ipaddress}{'latency'}           if  (exists $host{$ipaddress}{'latency'});
           $hop=       $host{$ipaddress}{'hops'}              if  (exists $host{$ipaddress}{'hops'});
           $os_cpe=    $host{$ipaddress}{'os_cpe'}            if  (exists $host{$ipaddress}{'os_cpe'});
-	  $os_cpe=~   s/(.{45,60}[^\s,]+)[\s,]+/$1\\n/g;
+          $os_cpe=~   s/(.{45,60}[^\s,]+)[\s,]+/$1\\n/g;
           $os_details=$host{$ipaddress}{'os_details'}        if  (exists $host{$ipaddress}{'os_details'});
-	  $os_details=~s/(.{45,60}[^\s,]+)[\s,]+/$1\\n/g;
+          $os_details=~s/(.{45,60}[^\s,]+)[\s,]+/$1\\n/g;
           $ports=     $host{$ipaddress}{'ports'}             if  (exists $host{$ipaddress}{'ports'});
           $mac=       $host{$ipaddress}{'mac'}               if  (exists $host{$ipaddress}{'mac'});
           $mac=       $hostmac{$ipaddress}                   if ((exists $hostmac{$ipaddress}) && (!$mac));
           $fact=      join("\\n",@{$fact{$ipaddress}})       if ((exists $fact{$ipaddress}) && (@{$fact{$ipaddress}}));
-	  $fact=~     s/(.{45,60}[^\s,]+)[\s,]+/$1\\n/g;
+          $fact=~     s/(.{45,60}[^\s,]+)[\s,]+/$1\\n/g;
           $port=      join("\\n",@{$port{$ipaddress}})       if ((exists $port{$ipaddress}) && (@{$port{$ipaddress}}));
           $firstscanned=strftime("%F %T", localtime);
           $lastscanned= strftime("%F %T", localtime);
@@ -579,7 +579,7 @@ foreach my $ipaddress (sort keys %ipall) {
                my @var=split(/##/,$line);
                foreach my $var (@var) {
                     $var=~s/NEWLINE/\\n/g;
-		    print "VAR=>>$var<<\n";
+                    print "VAR=>>$var<<\n";
                     if (exists $subnets{$ipaddress}) {
                          #
                          # Host is scanned
@@ -587,17 +587,28 @@ foreach my $ipaddress (sort keys %ipall) {
                          my $m=$1 if ($var =~ /MAC:(.+)$/);
                          my $d=$1 if ($var =~ /DEVICETYPE:(.+)$/);
                          my $r=$1 if ($var =~ /RUNNING:(.+)$/);
-			 if ((($h) && ($hostname)   && ($h !~ /^$hostname$/))   ||
+                         if ((($h) && ($hostname)   && ($h !~ /^$hostname$/))   ||
                              (($m) && ($mac)        && ($m !~ /^$mac$/))        ||
                              (($d) && ($devicetype) && ($d !~ /^$devicetype$/)) ||
                              (($r) && ($running)    && ($r !~ /^$running$/))) {
                               print "Cache file does not match scanned host $ipaddress! Cache file $file will be removed!\n" if ($debug);
                               unlink($file);
                          } else {
-                              $timesscanned=$1+1 if ($var =~ /TIMESSCANNED:(.+)$/);
+                              if ($var =~ /TIMESSCANNED:(.+)$/) {
+                                   $timesscanned=$1;
+                                   if ($timesscanned=~ /^(\d+)\/(\d+)$/) {
+                                        ($timesscanned,$totalscans)=($1,$2);
+                                   } elsif ($timesscanned=~/^(\d+)$/) {
+                                        ($timesscanned,$totalscans)=($1,$1);
+                                   } else {
+                                        ($timesscanned,$totalscans)=(1,1);
+                                   }
+                                   $totalscans+=1;
+                                   $timesscanned+=1;
+                              }
                               $firstscanned=$1   if ($var =~ /FIRSTSCANNED:(.+)$/);
                               foreach my $index (0 .. $#details) {
-                                   $details[$index]=~s/Times\sScanned:.*$/Times Scanned: $timesscanned/g;
+                                   $details[$index]=~s/Times\sScanned:.*$/Times Scanned: $timesscanned\/$totalscans/g;
                                    $details[$index]=~s/First\sScanned:\s.+$/First Scanned: $firstscanned/g;
                               }
                          }
@@ -622,18 +633,30 @@ foreach my $ipaddress (sort keys %ipall) {
                          $os_cpe      =$1             if ($var =~ /OS_CPE:(.+)\z/sm);
                          $os_details  =$1             if ($var =~ /OS_DETAILS:(.+)\z/sm);
                          $ports       =$1             if ($var =~ /PORTS:(.+)\z/sm);
+                         $link        =$1             if ($var =~ /LINK:(.+)\z/sm);
                          $firstscanned=$1             if ($var =~ /FIRSTSCANNED:(.+)$/);
                          $lastscanned =$1             if ($var =~ /LASTSCANNED:(.+)$/);
-                         $timesscanned=$1             if ($var =~ /TIMESSCANNED:(.+)$/);
-                         $link        =$1             if ($var =~ /LINK:(.+)\z/sm);
+                         if ($var =~ /TIMESSCANNED:(.+)$/) {
+                              $timesscanned=$1;
+                              if ($timesscanned=~ /^(\d+)\/(\d+)$/) {
+                                   ($timesscanned,$totalscans)=($1,$2);
+                              } elsif ($timesscanned=~/^(\d+)$/) {
+                                   ($timesscanned,$totalscans)=($1,$1);
+                              } else {
+                                   ($timesscanned,$totalscans)=(1,1);
+                              }
+                              $totalscans+=1;
+                         }
                          $status      ="down";
                          foreach my $index (0 .. $#details) {
+                              $details[$index]=~s/Times\sScanned:.*$/Times Scanned: $timesscanned\/$totalscans/g;
                               $details[$index]=~s/Status:\s.+$/Status: down/g;
                          }
                     }
                }
           }
-          print "IPADDRESS=$ipaddress, TIMES_SCANNED=$timesscanned, FIRST_SCANNED=$firstscanned, LAST_SCANNED=$lastscanned, STATUS=$status, FILE=$file\n" if ($debug);
+          print "IPADDRESS=$ipaddress, TIMES_SCANNED=$timesscanned/$totalscans, FIRST_SCANNED=$firstscanned, LAST_SCANNED=$lastscanned, STATUS=$status, FILE=$file\n" if ($debug);
+          $timesscanned="$timesscanned/$totalscans";
      }
 
      #
@@ -641,7 +664,7 @@ foreach my $ipaddress (sort keys %ipall) {
      if ($link) {
           print "PUSH LINK FROM CACHE: -->>$link<<-- \nNAME: -->>$name<<--\n";
           push(@links,$link);
-     } elsif ((exists $gateway{$ipall{$ipaddress}}) && (NAME($gateway{$ipall{$ipaddress}}) !~ /\A${name}\z/sm)) {
+     } elsif ((exists $gateway{$ipall{$ipaddress}}) && (NAME($gateway{$ipall{$ipaddress}}) !~ /${name}/)) {
           $link="{ from: \"${name}\", to: \"".NAME($gateway{$ipall{$ipaddress}})."\" }";
           print "PUSH NEW CREATED LINK: -->>$link<<--\nNAME: -->>$name<<--\n";
           push(@links,$link);
@@ -677,7 +700,7 @@ foreach my $ipaddress (sort keys %ipall) {
                      "##LINK:"        .($link        ||"").
                      "##FIRSTSCANNED:".($firstscanned||strftime("%F %T", localtime)).
                      "##LASTSCANNED:" .($lastscanned ||strftime("%F %T", localtime)).
-                     "##TIMESSCANNED:".($timesscanned||1)."##";
+                     "##TIMESSCANNED:".($timesscanned||"1/1")."##";
           $output=~s/\Q\n\E/NEWLINE/gm;
           my $datafile="nmapdata/$ipaddress";
           $datafile=~s/\./_/g;
@@ -704,7 +727,7 @@ foreach my $ipaddress (sort keys %ipall) {
     <td>'.($devicetype  ||"" ).'</td>
     <td>'.($ostype      ||"" ).'</td>
     <td>'.($running     ||"" ).'</td>
-    <td>'.($hop         ||"" ).'</td>
+    <td>'.($hop         ||'0' ).'</td>
     <td>'.($os_cpe      ||"" ).'</td>
     <td>'.($os_details  ||"" ).'</td>
     <td>'.($ports       ||"" ).'</td>
@@ -994,7 +1017,7 @@ var tfConfig = {
     rows_counter: true,
     btn_reset: true,
     status_bar: true,
-    col_widths: ["30px","120px","120px","30px","120px","120px","120px","180px","120px","120px","150px","150px","100px","10%","30px","10%","10%","10%"],
+    col_widths: ["","100px","100px","","120px","120px","120px","180px","120px","120px","150px","150px","100px","10%","30px","10%","10%","10%"],
     col_types: [
        'string',
        'string',
@@ -1017,7 +1040,7 @@ var tfConfig = {
        ],
     extensions: [{ name: 'sort' },
                  { name: 'colsVisibility',
-                      at_start: [1,2,3,8,13,14,15,16],
+                      at_start: [1,2,4,9,14,15,16,17],
                       text: 'Hide columns: ',
                       enable_tick_all: true}]
 };
