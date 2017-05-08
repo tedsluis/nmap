@@ -255,7 +255,10 @@ sub TraceRoute(@) {
                     # Gateway Host IP's other subnets
                     if ((exists $hostips{$ipaddress}) && (!exists $gateway{$subnets{$ipaddress}}) && (exists $subnets{$hostgateway})){
                          foreach my $ip (keys %hostips) {
-                         $gateway{$subnets{$ipaddress}}=$ip if ($subnets{$ip} =~ /^$subnets{$hostgateway}$/);
+                              if ($subnets{$ip} =~ /^$subnets{$hostgateway}$/) {
+                                   $gateway{$subnets{$ipaddress}}=$ip;
+                                   print "IPADRESS=$ipaddress (subnet=".$subnets{$ipaddress}."), hostip/gateway=$ip (subnet=".$subnets{$ip}.")\n" if ($debug);
+                              }
                          }
                     }
                     # subnet is reachable using hostip
@@ -669,7 +672,7 @@ foreach my $ipaddress (sort keys %ipall) {
           print "PUSH NEW CREATED LINK: -->>$link<<--\nNAME: -->>$name<<--\n";
           push(@links,$link);
      } else {
-          print "NO LINK PUSHED! NAME [".NAME($gateway{$ipall{$ipaddress}})."] matches [".$name."]!\n";
+          print "NO LINK PUSHED! NAME [".NAME($gateway{$ipall{$ipaddress}})."] matches [".$name."]! Gateway=".($gateway{$ipaddress}||"none").", subnet=".$ipall{$ipaddress}.", gateway=".$gateway{$ipall{$ipaddress}}.", ip=$ipaddress\n";
      }
 
      # 
